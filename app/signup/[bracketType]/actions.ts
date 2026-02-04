@@ -4,31 +4,62 @@ import { supabase } from "@/lib/supabase";
 
 type BracketType = "recreational" | "competitive";
 
+const MAX_TEAMS_PER_BRACKET = 32;
+
+type RegisterTeamInput = {
+  teamName: string;
+  contactEmail: string;
+  player1Name: string;
+  player1Email: string;
+  player2Name: string;
+  player2Email: string;
+};
+
+// Email format check
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+// Normalize user input to prevent duplicates and whitespace issues
+function normalizeInput(formData: RegisterTeamInput): RegisterTeamInput {
+  return {
+    teamName: formData.teamName.trim(),
+    contactEmail: formData.contactEmail.trim().toLowerCase(),
+    player1Name: formData.player1Name.trim(),
+    player1Email: formData.player1Email.trim().toLowerCase(),
+    player2Name: formData.player2Name.trim(),
+    player2Email: formData.player2Email.trim().toLowerCase(),
+  };
 }
 
 export async function registerTeam(
   bracketType: BracketType,
-  formData: {
-    teamName: string;
-    contactEmail: string;
-    player1Name: string;
-    player1Email: string;
-    player2Name: string;
-    player2Email: string;
-  },
+  formData: RegisterTeamInput,
 ) {
-  // Validate bracket
+  // Validate bracket type
   if (!["recreational", "competitive"].includes(bracketType)) {
     throw new Error("Invalid bracket type.");
   }
 
-  // Validate emails
+  // Normalize and validate basic input
+  const normalized = normalizeInput(formData);
+
+  if (!normalized.teamName || normalized.teamName.length < 2) {
+    throw new Error("Please provide a valid team name.");
+  }
+
+  if (!normalized.player1Name || !normalized.player2Name) {
+    throw new Error("Both player names are required.");
+  }
+
+  if (normalized.player1Email === normalized.player2Email) {
+    throw new Error("Player emails must be different.");
+  }
+
+  // Validate email formats
   const emails = [
-    formData.contactEmail,
-    formData.player1Email,
-    formData.player2Email,
+    normalized.contactEmail,
+    normalized.player1Email,
+    normalized.player2Email,
   ];
 
   for (const email of emails) {
@@ -37,7 +68,7 @@ export async function registerTeam(
     }
   }
 
-  // Fetch bracket
+  // Fetch the bracket
   const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id")
@@ -48,24 +79,32 @@ export async function registerTeam(
     throw new Error("Bracket not found.");
   }
 
-  // Enforce 32-team cap
-  const { count } = await supabase
+  // Enforce the 32-team cap
+  const { count, error: countError } = await supabase
     .from("teams")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("bracket_id", bracket.id)
     .eq("is_active", true);
 
-  if ((count ?? 0) >= 32) {
+  if (countError) {
+    throw new Error("Could not verify bracket availability.");
+  }
+
+  if ((count ?? 0) >= MAX_TEAMS_PER_BRACKET) {
     throw new Error("This bracket is full.");
   }
 
-  // Prevent duplicate registration by contact email
-  const { count: existingTeams } = await supabase
+  // Prevent duplicate registrations by contact email (per bracket)
+  const { count: existingTeams, error: existingTeamsError } = await supabase
     .from("teams")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("bracket_id", bracket.id)
-    .eq("contact_email", formData.contactEmail)
+    .eq("contact_email", normalized.contactEmail)
     .eq("is_active", true);
+
+  if (existingTeamsError) {
+    throw new Error("Could not validate this registration.");
+  }
 
   if ((existingTeams ?? 0) > 0) {
     throw new Error(
@@ -73,53 +112,60 @@ export async function registerTeam(
     );
   }
 
-  // Simple rate limiting (same email, last 10 minutes)
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-
-  const { count: recentAttempts } = await supabase
-    .from("teams")
-    .select("*", { count: "exact", head: true })
-    .eq("contact_email", formData.contactEmail)
-    .gte("created_at", tenMinutesAgo);
-
-  if ((recentAttempts ?? 0) >= 1) {
-    throw new Error(
-      "Please wait a few minutes before submitting another registration.",
-    );
-  }
-
-  // Create team
+  // Create the team
   const { data: team, error: teamError } = await supabase
     .from("teams")
     .insert({
       bracket_id: bracket.id,
-      name: formData.teamName,
-      contact_email: formData.contactEmail,
+      name: normalized.teamName,
+      contact_email: normalized.contactEmail,
     })
-    .select()
+    .select("id")
     .single();
 
   if (teamError || !team) {
     throw new Error("Failed to create team.");
   }
 
-  // Create players
+  // Create the players
   const { error: playerError } = await supabase.from("players").insert([
     {
       team_id: team.id,
-      name: formData.player1Name,
-      email: formData.player1Email,
+      name: normalized.player1Name,
+      email: normalized.player1Email,
     },
     {
       team_id: team.id,
-      name: formData.player2Name,
-      email: formData.player2Email,
+      name: normalized.player2Name,
+      email: normalized.player2Email,
     },
   ]);
 
+  // Roll back team if player creation fails
   if (playerError) {
+    await supabase.from("teams").delete().eq("id", team.id);
     throw new Error("Failed to create players.");
   }
 
-  return { success: true };
+  // Final capacity revalidation (protects against race conditions)
+  const { count: finalCount, error: finalCountError } = await supabase
+    .from("teams")
+    .select("id", { count: "exact", head: true })
+    .eq("bracket_id", bracket.id)
+    .eq("is_active", true);
+
+  if (finalCountError) {
+    throw new Error("Team saved, but availability could not be revalidated.");
+  }
+
+  if ((finalCount ?? 0) > MAX_TEAMS_PER_BRACKET) {
+    await supabase.from("players").delete().eq("team_id", team.id);
+    await supabase.from("teams").delete().eq("id", team.id);
+    throw new Error(
+      "This bracket filled up while you submitted. Please try another bracket.",
+    );
+  }
+
+  // Success
+  return { success: true, teamId: team.id };
 }

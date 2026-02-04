@@ -1,28 +1,81 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { Alert, Button, Card, Form, Input, Typography } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Form,
+  Input,
+  Row,
+  Space,
+  Tag,
+  Typography,
+} from "antd";
+import {
+  CheckCircleTwoTone,
+  MailOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { registerTeam } from "./actions";
 
+type BracketType = "recreational" | "competitive";
+
+type SignupFormValues = {
+  teamName: string;
+  contactEmail: string;
+  player1Name: string;
+  player1Email: string;
+  player2Name: string;
+  player2Email: string;
+};
+
+const REQUIRED_TEXT = "This field is required.";
+
 export default function SignupPage() {
-  const { bracketType } = useParams();
+  const params = useParams<{ bracketType: string }>();
+  const bracketType = params?.bracketType;
+  const [form] = Form.useForm<SignupFormValues>();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (bracketType !== "recreational" && bracketType !== "competitive") {
-    return <Typography.Text>Invalid bracket.</Typography.Text>;
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <Card className="max-w-lg w-full" style={{ borderRadius: 16 }}>
+          <Typography.Title level={4}>Invalid Bracket</Typography.Title>
+          <Typography.Paragraph type="secondary">
+            This signup link is invalid. Please return to the homepage and
+            choose a valid bracket.
+          </Typography.Paragraph>
+          <Link href="/">
+            <Button type="primary">Back to Home</Button>
+          </Link>
+        </Card>
+      </div>
+    );
   }
 
-  const onFinish = async (values: any) => {
+  const bracketLabel =
+    bracketType === "recreational"
+      ? "Recreational Bracket"
+      : "Competitive Bracket";
+
+  const onFinish = async (values: SignupFormValues) => {
     try {
       setError(null);
       setLoading(true);
-      await registerTeam(bracketType, values);
+      await registerTeam(bracketType as BracketType, values);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+      form.resetFields();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -30,36 +83,60 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <Card className="max-w-md w-full">
-          <Typography.Title level={3}>
-            Registration Complete 🎉
-          </Typography.Title>
-          <Typography.Paragraph>
-            Your team has been successfully registered for the{" "}
-            <strong>{bracketType}</strong> bracket.
-          </Typography.Paragraph>
-          <Typography.Paragraph type="secondary">
-            We’ll contact you via email with tournament details.
-          </Typography.Paragraph>
+      <div className="min-h-screen flex items-center justify-center px-6 py-10">
+        <Card className="max-w-2xl w-full" style={{ borderRadius: 16 }}>
+          <Space direction="vertical" size={12} className="w-full">
+            <CheckCircleTwoTone
+              twoToneColor="#52c41a"
+              style={{ fontSize: 28 }}
+            />
+            <Typography.Title level={3} style={{ margin: 0 }}>
+              You are registered
+            </Typography.Title>
+            <Typography.Paragraph style={{ marginBottom: 0 }}>
+              Your team has been successfully registered for the{" "}
+              <strong>{bracketLabel}</strong>.
+            </Typography.Paragraph>
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              We will send next steps and tournament updates to your contact
+              email.
+            </Typography.Paragraph>
+            <Space wrap>
+              <Button onClick={() => setSuccess(false)}>
+                Register Another Team
+              </Button>
+              <Link href="/">
+                <Button type="primary">Back to Home</Button>
+              </Link>
+            </Space>
+          </Space>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <Card className="max-w-md w-full">
-        <Typography.Title level={3}>
-          {bracketType === "recreational"
-            ? "Recreational Bracket Signup"
-            : "Competitive Bracket Signup"}
-        </Typography.Title>
+    <div className="min-h-screen flex items-center justify-center px-6 py-10">
+      <Card className="max-w-2xl w-full" style={{ borderRadius: 16 }}>
+        <Space direction="vertical" size={8} className="w-full">
+          <Tag color={bracketType === "recreational" ? "blue" : "volcano"}>
+            {bracketLabel}
+          </Tag>
+          <Typography.Title level={3} style={{ margin: 0 }}>
+            Team Registration
+          </Typography.Title>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+            Enter team and player information. You can reuse a player email for
+            the team email.
+          </Typography.Paragraph>
 
-        <Typography.Paragraph type="secondary">
-          Please provide accurate contact information. We’ll use this to share
-          tournament details.
-        </Typography.Paragraph>
+          <Typography.Text type="secondary">
+            Note that each bracket is capped at 32 teams and registration is
+            first-come, first-serve.
+          </Typography.Text>
+        </Space>
+
+        <Divider />
 
         {error && (
           <Alert
@@ -70,76 +147,128 @@ export default function SignupPage() {
           />
         )}
 
-        <Form layout="vertical" onFinish={onFinish}>
-          <Form.Item
-            label="Team Name"
-            name="teamName"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
+        <Form<SignupFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          scrollToFirstError
+          requiredMark={false}
+        >
+          <Typography.Title level={5}>Team Details</Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Team Name"
+                name="teamName"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  {
+                    min: 2,
+                    message: "Team name should be at least 2 characters.",
+                  },
+                  { whitespace: true, message: "Team name cannot be blank." },
+                ]}
+              >
+                <Input
+                  prefix={<TeamOutlined />}
+                  placeholder="Example: ACE Studs"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Team Contact Email"
+                name="contactEmail"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  { type: "email", message: "Enter a valid email." },
+                ]}
+              >
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="reveille@tamu.edu"
+                  autoComplete="email"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Team Contact Email"
-            name="contactEmail"
-            rules={[
-              {
-                required: true,
-                type: "email",
-                message: "Enter a valid email.",
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
+          <Divider style={{ margin: "8px 0 20px" }} />
+          <Typography.Title level={5}>Player Details</Typography.Title>
 
-          <Form.Item
-            label="Player 1 Name"
-            name="player1Name"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Player 1 Name"
+                name="player1Name"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  { whitespace: true, message: "Player name cannot be blank." },
+                ]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Ridge Robinson" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Player 1 Email"
+                name="player1Email"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  { type: "email", message: "Enter a valid email." },
+                ]}
+              >
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="reveille@tamu.edu"
+                  autoComplete="email"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Player 2 Name"
+                name="player2Name"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  { whitespace: true, message: "Player name cannot be blank." },
+                ]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Taylor Six" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Player 2 Email"
+                name="player2Email"
+                rules={[
+                  { required: true, message: REQUIRED_TEXT },
+                  { type: "email", message: "Enter a valid email." },
+                ]}
+              >
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="reveille@tamu.edu"
+                  autoComplete="email"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Player 1 Email"
-            name="player1Email"
-            rules={[
-              {
-                required: true,
-                type: "email",
-                message: "Enter a valid email.",
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="Player 2 Name"
-            name="player2Name"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="Player 2 Email"
-            name="player2Email"
-            rules={[
-              {
-                required: true,
-                type: "email",
-                message: "Enter a valid email.",
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Button type="primary" htmlType="submit" block loading={loading}>
-            Register Team
-          </Button>
+          <Space direction="vertical" size={12} className="w-full">
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={loading}
+              size="large"
+            >
+              Register Team
+            </Button>
+            <Typography.Text type="secondary">
+              ACE can update team details later if you need corrections.
+            </Typography.Text>
+          </Space>
         </Form>
       </Card>
     </div>
