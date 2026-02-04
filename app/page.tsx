@@ -10,7 +10,7 @@ import PurposeSection from "@/components/PurposeSection";
 import FAQSection from "@/components/FAQSection";
 import ContactSection from "@/components/ContactSection";
 
-const EVENT_DATE = new Date(2026, 2, 27, 9, 0, 0);
+const EVENT_DATE = new Date(2026, 3, 18, 9, 0, 0);
 
 function getCountdownParts() {
   const diffMs = EVENT_DATE.getTime() - Date.now();
@@ -37,7 +37,10 @@ export default function HomePage() {
   }, []);
 
   const handleScrollToNextSection = () => {
-    nextSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    nextSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -67,7 +70,7 @@ export default function HomePage() {
                   </span>
                 </Typography.Paragraph>
                 <Typography.Text type="secondary">
-                  Event Date: March 27, 2026
+                  Event Date: April 18, 2026
                 </Typography.Text>
 
                 <Space wrap size="middle">
