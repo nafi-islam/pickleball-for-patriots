@@ -26,9 +26,12 @@ function getCountdownParts() {
 
 export default function HomePage() {
   const nextSectionRef = useRef<HTMLDivElement>(null);
-  const [countdown, setCountdown] = useState(getCountdownParts);
+  const [mounted, setMounted] = useState(false);
+  const [countdown, setCountdown] = useState({ days: 0 });
 
   useEffect(() => {
+    setMounted(true);
+    setCountdown(getCountdownParts());
     const timer = window.setInterval(() => {
       setCountdown(getCountdownParts());
     }, 1000);
@@ -64,7 +67,7 @@ export default function HomePage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <span className="countdown font-mono text-2xl">
-                      <span data-value={countdown.days} />
+                      <span data-value={mounted ? countdown.days : ""} />
                     </span>
                     Days Until Event
                   </span>
