@@ -25,7 +25,7 @@ export function AdminTeamsClient({
   competitiveTeams,
 }: Props) {
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <Typography.Title level={2}>Team Management</Typography.Title>
 
       <Tabs
