@@ -1,0 +1,47 @@
+"use client";
+
+import { Tabs, Typography } from "antd";
+import { TeamsTable } from "@/components/admin/TeamsTable";
+
+type TeamRow = {
+  id: string;
+  name: string;
+  contact_email: string;
+  is_active: boolean;
+  bracket_type: string;
+  players: {
+    name: string;
+    email: string;
+  }[];
+};
+
+type Props = {
+  recreationalTeams: TeamRow[];
+  competitiveTeams: TeamRow[];
+};
+
+export function AdminTeamsClient({
+  recreationalTeams,
+  competitiveTeams,
+}: Props) {
+  return (
+    <div className="px-6 py-8 max-w-7xl mx-auto">
+      <Typography.Title level={2}>Team Management</Typography.Title>
+
+      <Tabs
+        items={[
+          {
+            key: "rec",
+            label: "Recreational",
+            children: <TeamsTable teams={recreationalTeams} />,
+          },
+          {
+            key: "comp",
+            label: "Competitive",
+            children: <TeamsTable teams={competitiveTeams} />,
+          },
+        ]}
+      />
+    </div>
+  );
+}

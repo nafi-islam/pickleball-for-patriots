@@ -26,17 +26,19 @@ function getCountdownParts() {
 
 export default function HomePage() {
   const nextSectionRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-  const [countdown, setCountdown] = useState({ days: 0 });
+  const [countdown, setCountdown] = useState<{ days: number } | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    setCountdown(getCountdownParts());
+    const updateCountdown = () => setCountdown(getCountdownParts());
+    const timeoutId = window.setTimeout(updateCountdown, 0);
     const timer = window.setInterval(() => {
-      setCountdown(getCountdownParts());
+      updateCountdown();
     }, 1000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(timer);
+    };
   }, []);
 
   const handleScrollToNextSection = () => {
@@ -67,7 +69,7 @@ export default function HomePage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <span className="countdown font-mono text-2xl">
-                      <span data-value={mounted ? countdown.days : ""} />
+                      <span data-value={countdown ? countdown.days : ""} />
                     </span>
                     Days Until Event
                   </span>
