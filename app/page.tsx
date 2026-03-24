@@ -53,46 +53,62 @@ export default function HomePage() {
       <section className="min-h-screen flex flex-col">
         <LandingHeader />
 
-        <div className="w-full max-w-7xl mx-auto px-6 md:px-10 flex-1 flex items-center">
-          <Row gutter={[40, 40]} align="middle" className="w-full">
+        <div className="w-full max-w-7xl mx-auto px-0 sm:px-6 md:px-10 flex-1 flex items-center">
+          <Row
+            gutter={[{ xs: 0, sm: 24, lg: 40 }, 40]}
+            align="middle"
+            className="w-full"
+          >
             <Col xs={24} lg={12}>
-              <Space direction="vertical" size={16}>
-                <Typography.Text type="secondary" strong>
-                  The Aggie Club of Engineers Presents
-                </Typography.Text>
-                <Typography.Title level={1} style={{ margin: 0 }}>
-                  Pickleball for Patriots
-                </Typography.Title>
-                <Typography.Paragraph
-                  type="secondary"
-                  style={{ fontSize: 18, marginBottom: 0 }}
+              <div className="w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-0">
+                <Space
+                  direction="vertical"
+                  size={16}
+                  className="text-center sm:text-left sm:items-start items-center"
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <span className="countdown font-mono text-2xl">
-                      <span data-value={countdown ? countdown.days : ""} />
+                  <Typography.Text type="secondary" strong className="block">
+                    The Aggie Club of Engineers Presents
+                  </Typography.Text>
+                  <Typography.Title level={1} style={{ margin: 0 }}>
+                    Pickleball for Patriots
+                  </Typography.Title>
+                  <Typography.Paragraph
+                    type="secondary"
+                    style={{ fontSize: 18, marginBottom: 0 }}
+                  >
+                    <span className="inline-flex items-center gap-2 justify-center sm:justify-start">
+                      <span className="countdown font-mono text-2xl">
+                        <span data-value={countdown ? countdown.days : ""} />
+                      </span>
+                      Days Until Event
                     </span>
-                    Days Until Event
-                  </span>
-                </Typography.Paragraph>
-                <Typography.Text type="secondary">
-                  Event Date: April 18, 2026
-                </Typography.Text>
+                  </Typography.Paragraph>
+                  <Typography.Text type="secondary" className="block">
+                    Event Date: April 18, 2026
+                  </Typography.Text>
 
-                <Space wrap size="middle">
-                  <Link href="/signup/recreational">
-                    <Button type="primary" size="large">
-                      Recreational Bracket
-                    </Button>
-                  </Link>
-                  <Link href="/signup/competitive">
-                    <Button size="large">Competitive Bracket</Button>
-                  </Link>
+                  <Space
+                    wrap
+                    size="middle"
+                    className="justify-center sm:justify-start"
+                  >
+                    <Link href="/signup/recreational">
+                      <Button type="primary" size="large">
+                        Recreational Bracket
+                      </Button>
+                    </Link>
+                    <Link href="/signup/competitive">
+                      <Button size="large">Competitive Bracket</Button>
+                    </Link>
+                  </Space>
                 </Space>
-              </Space>
+              </div>
             </Col>
 
             <Col xs={24} lg={12}>
-              <ImageCarousel />
+              <div className="w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-0">
+                <ImageCarousel />
+              </div>
             </Col>
           </Row>
         </div>

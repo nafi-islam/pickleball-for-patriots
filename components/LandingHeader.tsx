@@ -6,8 +6,8 @@ import { Button, Typography } from "antd";
 
 export default function LandingHeader() {
   return (
-    <header className="flex items-center justify-between px-6 md:px-10 py-6 max-w-7xl mx-auto w-full">
-      <div className="flex items-center gap-3">
+    <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 md:px-10 py-6 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:text-left">
         <Image src="/assets/ACE.png" alt="ACE Logo" width={44} height={44} />
         <div>
           <Typography.Text strong>Aggie Club of Engineers</Typography.Text>
@@ -20,7 +20,7 @@ export default function LandingHeader() {
         </div>
       </div>
 
-      <div>
+      <div className="flex items-center justify-center sm:justify-end">
         <SignedOut>
           <SignInButton>
             <Button type="text">Member Sign In</Button>

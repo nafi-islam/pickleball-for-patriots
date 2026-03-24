@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button, Divider, Menu, Typography } from "antd";
+import { Button, Divider, Dropdown, Menu, Typography } from "antd";
 import {
   HomeOutlined,
+  MenuOutlined,
   SettingOutlined,
   TableOutlined,
   TrophyOutlined,
@@ -68,16 +69,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="flex-1">
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur">
+          <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/90 px-4 sm:px-6 py-4 backdrop-blur">
             <Typography.Text strong>Admin Dashboard</Typography.Text>
             <div className="flex items-center gap-3">
+              <Dropdown
+                className="md:hidden"
+                menu={{ items: primaryItems }}
+                placement="bottomRight"
+                trigger={["click"]}
+              >
+                <Button icon={<MenuOutlined />} />
+              </Dropdown>
               <Link href="/">
                 <Button>Home</Button>
               </Link>
               <UserButton />
             </div>
           </header>
-          <main className="px-6 py-6">{children}</main>
+          <main className="px-4 sm:px-6 py-6">{children}</main>
         </div>
       </div>
     </div>

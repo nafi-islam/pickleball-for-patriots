@@ -3,12 +3,12 @@ import { Button, Card, Col, Row, Space, Tag, Typography } from "antd";
 
 export default function ContactSection() {
   return (
-    <section className="py-10 px-6">
+    <section className="py-10 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
         <Card style={{ borderRadius: 16 }}>
           <Space direction="vertical" size={12} className="w-full">
             <Row gutter={[8, 16]} align="middle">
-              <Col xs={24} sm={8} className="flex justify-start">
+              <Col xs={24} sm={8} className="flex justify-center sm:justify-start">
                 <Image
                   src="/assets/RidgeRobinson.jpeg"
                   alt="Ridge Robinson"

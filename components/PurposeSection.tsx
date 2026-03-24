@@ -4,7 +4,7 @@ import { Card, Space, Tag, Typography } from "antd";
 
 export default function PurposeSection() {
   return (
-    <section className="py-10 px-6">
+    <section className="py-10 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
         <Card style={{ borderRadius: 16 }}>
           <Space direction="vertical" size={12} className="w-full">
