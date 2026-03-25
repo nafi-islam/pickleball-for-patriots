@@ -40,11 +40,18 @@ export default async function PublicBracketPage({ params }: PageProps) {
     .order("round", { ascending: true })
     .order("index_in_round", { ascending: true });
 
+  const normalizedMatches = (matches ?? []).map((match) => ({
+    ...match,
+    team_a: Array.isArray(match.team_a) ? match.team_a[0] ?? null : match.team_a,
+    team_b: Array.isArray(match.team_b) ? match.team_b[0] ?? null : match.team_b,
+    winner: Array.isArray(match.winner) ? match.winner[0] ?? null : match.winner,
+  }));
+
   return (
     <PublicBracketClient
       bracketType={bracketType as "recreational" | "competitive"}
       status={bracket.status}
-      matches={matches ?? []}
+      matches={normalizedMatches}
     />
   );
 }

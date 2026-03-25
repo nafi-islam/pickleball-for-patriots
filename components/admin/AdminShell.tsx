@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button, Divider, Dropdown, Menu, Typography } from "antd";
 import {
+  BarChartOutlined,
   HomeOutlined,
   MenuOutlined,
   SettingOutlined,
   TableOutlined,
-  TrophyOutlined,
 } from "@ant-design/icons";
 import { UserButton } from "@clerk/nextjs";
 
@@ -32,12 +32,12 @@ const primaryItems: MenuItem[] = [
   {
     key: "/admin/brackets",
     label: <Link href="/admin/brackets">Brackets</Link>,
-    icon: <TrophyOutlined />,
+    icon: <BarChartOutlined />,
   },
   {
     key: "/admin/scoring",
     label: <Link href="/admin/scoring">Scoring</Link>,
-    icon: <TrophyOutlined />,
+    icon: <TableOutlined />,
   },
   {
     key: "/admin/overrides",

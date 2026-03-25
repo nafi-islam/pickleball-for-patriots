@@ -15,10 +15,10 @@ type BracketType = "recreational" | "competitive";
 const MAX_TEAMS_PER_BRACKET = 32;
 
 export async function generateBracket(bracketType: BracketType) {
-  // 1. Require admin
+  // 1) Admin gate: bracket generation is an ops-only action.
   await requireAdmin();
 
-  // 2. Fetch bracket
+  // 2) Load bracket and current status.
   const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id, status")
@@ -29,7 +29,7 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Bracket not found.");
   }
 
-  // 3. Prevent duplicate generation
+  // 3) Prevent duplicate generation (matches already exist).
   const { count: existingMatchCount, error: existingMatchCountError } =
     await supabase
       .from("matches")
@@ -44,7 +44,7 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Bracket has already been generated.");
   }
 
-  // 4. Fetch active teams in registration order
+  // 4) Fetch active teams in registration order (deterministic seeding).
   const { data: teams, error: teamsError } = await supabase
     .from("teams")
     .select("id, name, created_at")
@@ -66,13 +66,13 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("This bracket exceeds the maximum team limit.");
   }
 
-  // 5. Build bracket structure
+  // 5) Build bracket structure: next power of two, slot padding for byes.
   const bracketSize = getNextPowerOfTwo(teams.length);
   const roundCount = getRoundCount(bracketSize);
   const slots = buildSlots(teams, bracketSize);
   const roundOnePairings = getRoundOnePairings(slots);
 
-  // 6. Create all matches
+  // 6) Create all matches upfront (full elimination tree).
   const allMatches: Array<{
     bracket_id: string;
     round: number;
@@ -85,7 +85,7 @@ export async function generateBracket(bracketType: BracketType) {
     order_in_round: number | null;
   }> = [];
 
-  // Round 1
+  // Round 1: set initial teams; pre-resolve byes as immediate wins.
   roundOnePairings.forEach((pairing, index) => {
     const winnerId =
       pairing.teamA && !pairing.teamB
@@ -107,7 +107,7 @@ export async function generateBracket(bracketType: BracketType) {
     });
   });
 
-  // Future rounds
+  // Future rounds: empty slots to be filled by winners.
   for (let round = 2; round <= roundCount; round++) {
     const matchesInRound = bracketSize / Math.pow(2, round);
 
@@ -126,7 +126,7 @@ export async function generateBracket(bracketType: BracketType) {
     }
   }
 
-  // 7. Insert all matches
+  // 7) Insert all matches in one batch.
   const { data: insertedMatches, error: insertMatchesError } = await supabase
     .from("matches")
     .insert(allMatches)
@@ -136,7 +136,9 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Failed to create matches.");
   }
 
-  // 8. Auto-advance byes across rounds
+  // 8) Auto-advance byes across rounds:
+  //    - If a match has exactly one team, mark it complete and advance the winner.
+  //    - Repeat for all rounds so single-team paths propagate.
   const { data: generatedMatches, error: generatedMatchesError } = await supabase
     .from("matches")
     .select(
@@ -150,6 +152,7 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Failed to load generated matches.");
   }
 
+  // Helper: place winner into the correct slot of the next round.
   const advanceWinner = async (
     matchRound: number,
     indexInRound: number,
@@ -199,7 +202,7 @@ export async function generateBracket(bracketType: BracketType) {
     }
   }
 
-  // 9. Update bracket status
+  // 9) Mark bracket as generated.
   const { error: updateBracketError } = await supabase
     .from("brackets")
     .update({ status: "GENERATED" })
@@ -211,6 +214,6 @@ export async function generateBracket(bracketType: BracketType) {
     );
   }
 
-  // 10. Success
+  // 10) Success
   return { success: true };
 }
