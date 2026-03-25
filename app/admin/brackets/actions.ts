@@ -12,6 +12,7 @@ import {
 } from "@/lib/bracket";
 
 type BracketType = "recreational" | "competitive";
+const MAX_TEAMS_PER_BRACKET = 32;
 
 export async function generateBracket(bracketType: BracketType) {
   // 1. Require admin
@@ -59,6 +60,10 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error(
       "At least two active teams are required to generate a bracket.",
     );
+  }
+
+  if (teams.length > MAX_TEAMS_PER_BRACKET) {
+    throw new Error("This bracket exceeds the maximum team limit.");
   }
 
   // 5. Build bracket structure
@@ -131,27 +136,66 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Failed to create matches.");
   }
 
-  // 8. Auto-advance byes from round 1 into round 2
-  const roundOneInserted = allMatches.filter((m) => m.round === 1);
+  // 8. Auto-advance byes across rounds
+  const { data: generatedMatches, error: generatedMatchesError } = await supabase
+    .from("matches")
+    .select(
+      "id, round, index_in_round, team_a_id, team_b_id, winner_team_id, status",
+    )
+    .eq("bracket_id", bracket.id)
+    .order("round", { ascending: true })
+    .order("index_in_round", { ascending: true });
 
-  for (const match of roundOneInserted) {
-    if (!match.winner_team_id) continue;
+  if (generatedMatchesError || !generatedMatches) {
+    throw new Error("Failed to load generated matches.");
+  }
 
-    const nextRound = 2;
-    if (nextRound > roundCount) continue;
+  const advanceWinner = async (
+    matchRound: number,
+    indexInRound: number,
+    winnerId: string,
+  ) => {
+    const nextRound = matchRound + 1;
+    if (nextRound > roundCount) return;
 
-    const nextMatchIndex = getNextMatchIndex(match.index_in_round);
-    const slotColumn = getNextMatchSlot(match.index_in_round);
+    const nextMatchIndex = getNextMatchIndex(indexInRound);
+    const slotColumn = getNextMatchSlot(indexInRound);
 
     const { error: advanceError } = await supabase
       .from("matches")
-      .update({ [slotColumn]: match.winner_team_id })
+      .update({ [slotColumn]: winnerId })
       .eq("bracket_id", bracket.id)
       .eq("round", nextRound)
       .eq("index_in_round", nextMatchIndex);
 
     if (advanceError) {
       throw new Error("Failed to auto-advance bye.");
+    }
+  };
+
+  for (let round = 1; round <= roundCount; round++) {
+    const matchesInRound = generatedMatches.filter((m) => m.round === round);
+
+    for (const match of matchesInRound) {
+      const hasTeamA = !!match.team_a_id;
+      const hasTeamB = !!match.team_b_id;
+
+      let winnerId = match.winner_team_id;
+      if (!winnerId && hasTeamA !== hasTeamB) {
+        winnerId = (match.team_a_id ?? match.team_b_id)!;
+        const { error: winnerUpdateError } = await supabase
+          .from("matches")
+          .update({ winner_team_id: winnerId, status: "COMPLETED" })
+          .eq("id", match.id);
+
+        if (winnerUpdateError) {
+          throw new Error("Failed to record bye winner.");
+        }
+      }
+
+      if (winnerId) {
+        await advanceWinner(match.round, match.index_in_round, winnerId);
+      }
     }
   }
 
