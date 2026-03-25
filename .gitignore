@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# dev docs (keep markdown)
+/readmes/dev/*
+
 #supabase
 /supabase/.temp
 /supabase/.branches

@@ -4,7 +4,7 @@ import { Carousel } from "antd";
 import Image from "next/image";
 
 const images = [
-  "/assets/pickleball-1.jpg",
+  "/assets/pickleball-dakota.jpg",
   "/assets/pickleball-2.jpg",
   "/assets/pickleball-3.jpg",
 ];

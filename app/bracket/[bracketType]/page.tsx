@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { PublicBracketClient } from "@/components/bracket/PublicBracketClient";
 
 type PageProps = {
-  params: { bracketType: string };
+  params: Promise<{ bracketType: string }>;
 };
 
 export default async function PublicBracketPage({ params }: PageProps) {
-  const { bracketType } = params;
+  const { bracketType } = await params;
 
   if (!["recreational", "competitive"].includes(bracketType)) {
     notFound();
