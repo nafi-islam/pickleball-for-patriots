@@ -7,6 +7,8 @@ type MatchRow = {
   round: number;
   index_in_round: number;
   status: string;
+  score_a?: number | null;
+  score_b?: number | null;
   team_a?: { id: string; name: string } | null;
   team_b?: { id: string; name: string } | null;
   winner?: { id: string; name: string } | null;
@@ -64,11 +66,20 @@ export function PublicBracketClient({ bracketType, status, matches }: Props) {
                         {match.team_b?.name ?? "TBD"}
                       </Typography.Text>
 
-                      {match.winner?.name ? (
-                        <Tag color="green">Winner: {match.winner.name}</Tag>
-                      ) : (
-                        <Tag>Pending</Tag>
-                      )}
+                    {match.winner?.name ? (
+                      <Tag color="green">
+                        Winner: {match.winner.name}
+                        {match.status === "COMPLETED" &&
+                          match.score_a !== null &&
+                          match.score_b !== null && (
+                            <span className="ml-2 text-xs">
+                              ({match.score_a}-{match.score_b})
+                            </span>
+                          )}
+                      </Tag>
+                    ) : (
+                      <Tag>Pending</Tag>
+                    )}
                     </Space>
                   </Card>
                 ))}

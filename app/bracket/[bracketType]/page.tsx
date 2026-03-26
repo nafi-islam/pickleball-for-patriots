@@ -31,6 +31,8 @@ export default async function PublicBracketPage({ params }: PageProps) {
       round,
       index_in_round,
       status,
+      score_a,
+      score_b,
       team_a:team_a_id ( id, name ),
       team_b:team_b_id ( id, name ),
       winner:winner_team_id ( id, name )
