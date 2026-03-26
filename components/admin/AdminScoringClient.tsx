@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Space, Tabs, Tag, Typography } from "antd";
+import { Card, Empty, Space, Tabs, Tag, Typography } from "antd";
 import ScoreForm from "@/components/admin/ScoreForm";
 
 type MatchRow = {
@@ -16,6 +16,14 @@ type MatchRow = {
 };
 
 function BracketScoringSection({ matches }: { matches: MatchRow[] }) {
+  if (matches.length === 0) {
+    return (
+      <Card style={{ borderRadius: 12 }}>
+        <Empty description="No matches yet for this bracket." />
+      </Card>
+    );
+  }
+
   return (
     <Space direction="vertical" size={16} className="w-full">
       {matches.map((match) => {
