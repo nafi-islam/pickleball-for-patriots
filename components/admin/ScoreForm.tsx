@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Form, InputNumber, Space } from "antd";
+import { useRouter } from "next/navigation";
+import { Button, Form, InputNumber, Space, message } from "antd";
 import { reportMatchResult } from "@/app/admin/scoring/actions";
 
 export default function ScoreForm({
@@ -14,6 +15,9 @@ export default function ScoreForm({
   teamBName: string;
 }) {
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
+  const router = useRouter();
 
   const onFinish = async (values: { scoreA: number; scoreB: number }) => {
     try {
@@ -23,13 +27,22 @@ export default function ScoreForm({
         scoreA: values.scoreA,
         scoreB: values.scoreB,
       });
+      messageApi.success("Score saved.");
+      form.resetFields();
+      router.refresh();
+    } catch (error) {
+      messageApi.error(
+        error instanceof Error ? error.message : "Failed to save score.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Form layout="inline" onFinish={onFinish}>
+    <>
+      {contextHolder}
+      <Form form={form} layout="inline" onFinish={onFinish}>
       <Space wrap>
         <Form.Item
           name="scoreA"
@@ -53,6 +66,7 @@ export default function ScoreForm({
           </Button>
         </Form.Item>
       </Space>
-    </Form>
+      </Form>
+    </>
   );
 }
