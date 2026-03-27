@@ -98,8 +98,8 @@ function BracketScoringSection({ matches }: { matches: MatchRow[] }) {
               ) : ready ? (
                 <ScoreForm
                   matchId={match.id}
-                  teamAName={match.team_a.name}
-                  teamBName={match.team_b.name}
+                  teamAName={match.team_a?.name ?? "Team A"}
+                  teamBName={match.team_b?.name ?? "Team B"}
                 />
               ) : (
                 <Typography.Text type="secondary">

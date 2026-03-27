@@ -259,7 +259,7 @@ export function AdminBracketsClient({
             : "Edit Competitive Seeding"
         }
         open={drawerOpen}
-        width={520}
+        size="large"
         onClose={() => {
           setDrawerOpen(false);
           setActiveBracket(null);
