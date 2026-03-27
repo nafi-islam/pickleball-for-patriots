@@ -3,12 +3,11 @@
 import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import {
-  buildSlots,
+  buildRoundOnePairings,
   getNextMatchIndex,
   getNextMatchSlot,
   getNextPowerOfTwo,
   getRoundCount,
-  getRoundOnePairings,
 } from "@/lib/bracket";
 
 type BracketType = "recreational" | "competitive";
@@ -69,8 +68,7 @@ export async function generateBracket(bracketType: BracketType) {
   // 5) Build bracket structure: next power of two, slot padding for byes.
   const bracketSize = getNextPowerOfTwo(teams.length);
   const roundCount = getRoundCount(bracketSize);
-  const slots = buildSlots(teams, bracketSize);
-  const roundOnePairings = getRoundOnePairings(slots);
+  const roundOnePairings = buildRoundOnePairings(teams, bracketSize);
 
   // 6) Create all matches upfront (full elimination tree).
   const allMatches: Array<{
