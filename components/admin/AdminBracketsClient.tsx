@@ -1,9 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { Button, Card, Col, Empty, Row, Space, Tag, Typography, message } from "antd";
-import { generateBracket } from "@/app/admin/brackets/actions";
+import { useMemo, useState, useTransition } from "react";
+import {
+  Button,
+  Card,
+  Col,
+  Divider,
+  Drawer,
+  Empty,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Tag,
+  Typography,
+  message,
+} from "antd";
+import {
+  generateBracket,
+  resetBracket,
+  setBracketStatus,
+  updateMatchParticipants,
+} from "@/app/admin/brackets/actions";
 
 type BracketSummary = {
   id: string;
@@ -11,6 +30,13 @@ type BracketSummary = {
   status: string;
   activeTeamCount: number;
   matchCount: number;
+  teams: Array<{ id: string; name: string }>;
+  roundOneMatches: Array<{
+    id: string;
+    index_in_round: number;
+    team_a_id: string | null;
+    team_b_id: string | null;
+  }>;
 };
 
 export function AdminBracketsClient({
@@ -21,6 +47,13 @@ export function AdminBracketsClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [messageApi, contextHolder] = message.useMessage();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeBracket, setActiveBracket] = useState<BracketSummary | null>(
+    null,
+  );
+  const [matchEdits, setMatchEdits] = useState<
+    Record<string, { teamAId: string | null; teamBId: string | null }>
+  >({});
 
   const handleGenerate = (type: BracketSummary["type"]) => {
     startTransition(async () => {
@@ -33,6 +66,95 @@ export function AdminBracketsClient({
           error instanceof Error
             ? error.message
             : "Failed to generate bracket.",
+        );
+      }
+    });
+  };
+
+  const handlePublish = (type: BracketSummary["type"]) => {
+    startTransition(async () => {
+      try {
+        await setBracketStatus(type, "PUBLISHED");
+        messageApi.success("Bracket published.");
+        router.refresh();
+      } catch (error) {
+        messageApi.error(
+          error instanceof Error ? error.message : "Failed to publish bracket.",
+        );
+      }
+    });
+  };
+
+  const handleUnpublish = (type: BracketSummary["type"]) => {
+    startTransition(async () => {
+      try {
+        await setBracketStatus(type, "GENERATED");
+        messageApi.success("Bracket unpublished.");
+        router.refresh();
+      } catch (error) {
+        messageApi.error(
+          error instanceof Error ? error.message : "Failed to unpublish bracket.",
+        );
+      }
+    });
+  };
+
+  const handleReset = (type: BracketSummary["type"]) => {
+    Modal.confirm({
+      title: "Reset bracket?",
+      content:
+        "This will delete all matches for this bracket and set its status back to DRAFT.",
+      okText: "Reset",
+      okButtonProps: { danger: true },
+      onOk: () =>
+        startTransition(async () => {
+          try {
+            await resetBracket(type);
+            messageApi.success("Bracket reset.");
+            router.refresh();
+          } catch (error) {
+            messageApi.error(
+              error instanceof Error ? error.message : "Failed to reset bracket.",
+            );
+          }
+        }),
+    });
+  };
+
+  const openSeeding = (bracket: BracketSummary) => {
+    setActiveBracket(bracket);
+    const initial: Record<string, { teamAId: string | null; teamBId: string | null }> = {};
+    for (const match of bracket.roundOneMatches) {
+      initial[match.id] = {
+        teamAId: match.team_a_id ?? null,
+        teamBId: match.team_b_id ?? null,
+      };
+    }
+    setMatchEdits(initial);
+    setDrawerOpen(true);
+  };
+
+  const teamOptions = useMemo(() => {
+    if (!activeBracket) return [];
+    return activeBracket.teams.map((team) => ({
+      label: team.name,
+      value: team.id,
+    }));
+  }, [activeBracket]);
+
+  const handleSaveMatch = (
+    matchId: string,
+    teamAId: string | null,
+    teamBId: string | null,
+  ) => {
+    startTransition(async () => {
+      try {
+        await updateMatchParticipants(matchId, teamAId, teamBId);
+        messageApi.success("Match updated.");
+        router.refresh();
+      } catch (error) {
+        messageApi.error(
+          error instanceof Error ? error.message : "Failed to update match.",
         );
       }
     });
@@ -55,8 +177,15 @@ export function AdminBracketsClient({
       ) : (
         <Row gutter={[16, 16]}>
           {brackets.map((bracket) => {
-            const isDisabled =
-              bracket.activeTeamCount < 2 || bracket.matchCount > 0 || isPending;
+            const generationDisabled =
+              bracket.activeTeamCount < 2 ||
+              bracket.matchCount > 0 ||
+              bracket.status === "GENERATED" ||
+              bracket.status === "PUBLISHED" ||
+              isPending;
+            const canPublish =
+              bracket.matchCount > 0 && bracket.status !== "PUBLISHED";
+            const canUnpublish = bracket.status === "PUBLISHED";
 
             return (
               <Col xs={24} md={12} key={bracket.id}>
@@ -83,14 +212,34 @@ export function AdminBracketsClient({
                       Existing matches: {bracket.matchCount}
                     </Typography.Text>
 
-                    <Button
-                      type="primary"
-                      disabled={isDisabled}
-                      loading={isPending}
-                      onClick={() => handleGenerate(bracket.type)}
-                    >
-                      Generate Bracket
-                    </Button>
+                    <Space wrap>
+                      <Button
+                        type="primary"
+                        disabled={generationDisabled}
+                        loading={isPending}
+                        onClick={() => handleGenerate(bracket.type)}
+                      >
+                        Generate Bracket
+                      </Button>
+                      <Button
+                        disabled={!canPublish || isPending}
+                        onClick={() => handlePublish(bracket.type)}
+                      >
+                        Publish
+                      </Button>
+                      <Button
+                        disabled={!canUnpublish || isPending}
+                        onClick={() => handleUnpublish(bracket.type)}
+                      >
+                        Unpublish
+                      </Button>
+                      <Button onClick={() => openSeeding(bracket)}>
+                        Edit Seeding
+                      </Button>
+                      <Button danger onClick={() => handleReset(bracket.type)}>
+                        Reset Bracket
+                      </Button>
+                    </Space>
                   </Space>
                 </Card>
               </Col>
@@ -98,6 +247,86 @@ export function AdminBracketsClient({
           })}
         </Row>
       )}
+
+      <Drawer
+        title={
+          activeBracket?.type === "recreational"
+            ? "Edit Recreational Seeding"
+            : "Edit Competitive Seeding"
+        }
+        open={drawerOpen}
+        width={520}
+        onClose={() => {
+          setDrawerOpen(false);
+          setActiveBracket(null);
+          setMatchEdits({});
+        }}
+      >
+        <Typography.Paragraph type="secondary">
+          Manual seeding does not clear scores or downstream matches. Use with
+          care during live play.
+        </Typography.Paragraph>
+        <Divider />
+        {activeBracket?.roundOneMatches.length ? (
+          <Space direction="vertical" size={12} className="w-full">
+            {activeBracket.roundOneMatches.map((match) => (
+              <Card key={match.id} size="small">
+                <Space direction="vertical" size={8} className="w-full">
+                  <Typography.Text strong>
+                    Round 1 · Match {match.index_in_round}
+                  </Typography.Text>
+                  <Select
+                    allowClear
+                    placeholder="Team A"
+                    options={teamOptions}
+                    value={matchEdits[match.id]?.teamAId ?? undefined}
+                    onChange={(value) =>
+                      setMatchEdits((prev) => ({
+                        ...prev,
+                        [match.id]: {
+                          teamAId: value ?? null,
+                          teamBId: prev[match.id]?.teamBId ?? null,
+                        },
+                      }))
+                    }
+                  />
+                  <Select
+                    allowClear
+                    placeholder="Team B"
+                    options={teamOptions}
+                    value={matchEdits[match.id]?.teamBId ?? undefined}
+                    onChange={(value) =>
+                      setMatchEdits((prev) => ({
+                        ...prev,
+                        [match.id]: {
+                          teamAId: prev[match.id]?.teamAId ?? null,
+                          teamBId: value ?? null,
+                        },
+                      }))
+                    }
+                  />
+                  <Button
+                    type="primary"
+                    size="small"
+                    disabled={isPending}
+                    onClick={() =>
+                      handleSaveMatch(
+                        match.id,
+                        matchEdits[match.id]?.teamAId ?? null,
+                        matchEdits[match.id]?.teamBId ?? null,
+                      )
+                    }
+                  >
+                    Save
+                  </Button>
+                </Space>
+              </Card>
+            ))}
+          </Space>
+        ) : (
+          <Empty description="No round 1 matches yet. Generate the bracket first." />
+        )}
+      </Drawer>
     </div>
   );
 }

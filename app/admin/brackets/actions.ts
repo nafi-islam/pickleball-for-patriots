@@ -12,6 +12,7 @@ import {
 
 type BracketType = "recreational" | "competitive";
 const MAX_TEAMS_PER_BRACKET = 32;
+type BracketStatus = "DRAFT" | "GENERATED" | "PUBLISHED";
 
 export async function generateBracket(bracketType: BracketType) {
   // 1) Admin gate: bracket generation is an ops-only action.
@@ -213,5 +214,94 @@ export async function generateBracket(bracketType: BracketType) {
   }
 
   // 10) Success
+  return { success: true };
+}
+
+export async function setBracketStatus(
+  bracketType: BracketType,
+  status: BracketStatus,
+) {
+  await requireAdmin();
+
+  const { data: bracket, error: bracketError } = await supabase
+    .from("brackets")
+    .select("id")
+    .eq("type", bracketType)
+    .single();
+
+  if (bracketError || !bracket) {
+    throw new Error("Bracket not found.");
+  }
+
+  const { error } = await supabase
+    .from("brackets")
+    .update({ status })
+    .eq("id", bracket.id);
+
+  if (error) {
+    throw new Error("Failed to update bracket status.");
+  }
+
+  return { success: true };
+}
+
+export async function resetBracket(bracketType: BracketType) {
+  await requireAdmin();
+
+  const { data: bracket, error: bracketError } = await supabase
+    .from("brackets")
+    .select("id")
+    .eq("type", bracketType)
+    .single();
+
+  if (bracketError || !bracket) {
+    throw new Error("Bracket not found.");
+  }
+
+  const { error: deleteError } = await supabase
+    .from("matches")
+    .delete()
+    .eq("bracket_id", bracket.id);
+
+  if (deleteError) {
+    throw new Error("Failed to reset matches for this bracket.");
+  }
+
+  const { error: statusError } = await supabase
+    .from("brackets")
+    .update({ status: "DRAFT" })
+    .eq("id", bracket.id);
+
+  if (statusError) {
+    throw new Error("Failed to reset bracket status.");
+  }
+
+  return { success: true };
+}
+
+export async function updateMatchParticipants(
+  matchId: string,
+  teamAId: string | null,
+  teamBId: string | null,
+) {
+  await requireAdmin();
+
+  if (teamAId && teamBId && teamAId === teamBId) {
+    throw new Error("A team cannot play itself.");
+  }
+
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      team_a_id: teamAId,
+      team_b_id: teamBId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", matchId);
+
+  if (error) {
+    throw new Error("Failed to update match participants.");
+  }
+
   return { success: true };
 }

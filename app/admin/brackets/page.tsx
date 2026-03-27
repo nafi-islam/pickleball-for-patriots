@@ -24,10 +24,26 @@ async function getBracketSummary(type: "recreational" | "competitive") {
     .select("id", { count: "exact", head: true })
     .eq("bracket_id", bracket.id);
 
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("id, name")
+    .eq("bracket_id", bracket.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true });
+
+  const { data: roundOneMatches } = await supabase
+    .from("matches")
+    .select("id, index_in_round, team_a_id, team_b_id")
+    .eq("bracket_id", bracket.id)
+    .eq("round", 1)
+    .order("index_in_round", { ascending: true });
+
   return {
     ...bracket,
     activeTeamCount: activeTeamCount ?? 0,
     matchCount: matchCount ?? 0,
+    teams: teams ?? [],
+    roundOneMatches: roundOneMatches ?? [],
   };
 }
 
