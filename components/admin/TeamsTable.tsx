@@ -1,6 +1,8 @@
 "use client";
 
-import { Button, Space, Table, Tag } from "antd";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button, Space, Table, Tag, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { withdrawTeam } from "./actions";
 
@@ -17,54 +19,81 @@ type TeamRow = {
   players: PlayerRow[];
 };
 
-const columns: ColumnsType<TeamRow> = [
-  {
-    title: "Team",
-    dataIndex: "name",
-  },
-  {
-    title: "Contact Email",
-    dataIndex: "contact_email",
-  },
-  {
-    title: "Players",
-    render: (_, record) => (
-      <Space direction="vertical" size={0}>
-        {record.players.map((player) => (
-          <span key={player.email}>
-            {player.name} ({player.email})
-          </span>
-        ))}
-      </Space>
-    ),
-  },
-  {
-    title: "Status",
-    render: (_, record) =>
-      record.is_active ? (
-        <Tag color="green">Active</Tag>
-      ) : (
-        <Tag color="red">Withdrawn</Tag>
-      ),
-  },
-  {
-    title: "Actions",
-    render: (_, record) =>
-      record.is_active && (
-        <Button danger size="small" onClick={() => withdrawTeam(record.id)}>
-          Withdraw
-        </Button>
-      ),
-  },
-];
-
 export function TeamsTable({ teams }: { teams: TeamRow[] }) {
+  const router = useRouter();
+  const [messageApi, contextHolder] = message.useMessage();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const columns: ColumnsType<TeamRow> = [
+    {
+      title: "Team",
+      dataIndex: "name",
+    },
+    {
+      title: "Contact Email",
+      dataIndex: "contact_email",
+    },
+    {
+      title: "Players",
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          {record.players.map((player) => (
+            <span key={player.email}>
+              {player.name} ({player.email})
+            </span>
+          ))}
+        </Space>
+      ),
+    },
+    {
+      title: "Status",
+      render: (_, record) =>
+        record.is_active ? (
+          <Tag color="green">Active</Tag>
+        ) : (
+          <Tag color="red">Withdrawn</Tag>
+        ),
+    },
+    {
+      title: "Actions",
+      render: (_, record) =>
+        record.is_active && (
+          <Button
+            danger
+            size="small"
+            loading={loadingId === record.id}
+            onClick={async () => {
+              try {
+                setLoadingId(record.id);
+                await withdrawTeam(record.id);
+                messageApi.success("Team withdrawn.");
+                router.refresh();
+              } catch (error) {
+                messageApi.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to withdraw team.",
+                );
+              } finally {
+                setLoadingId(null);
+              }
+            }}
+          >
+            Withdraw
+          </Button>
+        ),
+    },
+  ];
+
   return (
-    <Table
-      rowKey="id"
-      dataSource={teams}
-      pagination={false}
-      columns={columns}
-    />
+    <>
+      {contextHolder}
+      <Table
+        rowKey="id"
+        dataSource={teams}
+        pagination={false}
+        columns={columns}
+      />
+    </>
   );
 }

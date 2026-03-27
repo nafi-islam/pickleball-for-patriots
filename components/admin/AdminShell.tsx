@@ -75,7 +75,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <Dropdown
                 className="md:hidden"
                 menu={{ items: primaryItems }}
-                placement="bottomRight"
+                placement="bottom"
                 trigger={["click"]}
               >
                 <Button icon={<MenuOutlined />} />

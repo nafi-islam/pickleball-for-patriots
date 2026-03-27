@@ -9,6 +9,7 @@ type MatchRow = {
   status: string;
   score_a?: number | null;
   score_b?: number | null;
+  court?: string | null;
   team_a?: { id: string; name: string } | null;
   team_b?: { id: string; name: string } | null;
   winner?: { id: string; name: string } | null;
@@ -68,13 +69,18 @@ export function PublicBracketClient({ bracketType, status, matches }: Props) {
                 {roundMatches.map((match) => (
                   <Card key={match.id} style={{ borderRadius: 12 }}>
                     <Space direction="vertical" size={6} className="w-full">
-                      <Typography.Text strong>
-                        Match {match.index_in_round}
-                      </Typography.Text>
+                <Typography.Text strong>
+                  Match {match.index_in_round}
+                </Typography.Text>
+                {match.court && (
+                  <Typography.Text type="secondary">
+                    {match.court}
+                  </Typography.Text>
+                )}
 
-                      <Typography.Text>
-                        {match.team_a?.name ?? "TBD"}
-                      </Typography.Text>
+                <Typography.Text>
+                  {match.team_a?.name ?? "TBD"}
+                </Typography.Text>
 
                       <Typography.Text>
                         {match.team_b?.name ?? "TBD"}

@@ -10,6 +10,11 @@ type ReportScoreInput = {
   scoreB: number;
 };
 
+type SetCourtInput = {
+  matchId: string;
+  court: number | null;
+};
+
 export async function reportMatchResult({
   matchId,
   scoreA,
@@ -107,5 +112,27 @@ export async function reportMatchResult({
   }
 
   // 10. Success
+  return { success: true };
+}
+
+export async function setMatchCourt({ matchId, court }: SetCourtInput) {
+  await requireAdmin();
+
+  if (court !== null && (!Number.isInteger(court) || court < 1 || court > 8)) {
+    throw new Error("Court must be between 1 and 8.");
+  }
+
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      court: court ? `Court ${court}` : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", matchId);
+
+  if (error) {
+    throw new Error("Failed to update court.");
+  }
+
   return { success: true };
 }
