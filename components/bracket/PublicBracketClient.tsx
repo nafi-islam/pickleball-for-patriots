@@ -21,6 +21,20 @@ type Props = {
 };
 
 export function PublicBracketClient({ bracketType, status, matches }: Props) {
+  if (status !== "PUBLISHED") {
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <Typography.Title level={2}>
+          {bracketType === "recreational" ? "Recreational" : "Competitive"}{" "}
+          Bracket
+        </Typography.Title>
+        <Card style={{ borderRadius: 12 }}>
+          <Empty description="Bracket has not been published yet." />
+        </Card>
+      </div>
+    );
+  }
+
   const grouped = new Map<number, MatchRow[]>();
 
   for (const match of matches) {

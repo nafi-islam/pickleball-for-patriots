@@ -90,6 +90,84 @@ async function removeAdvancedWinnerFromNextMatch(match: MatchRow) {
 }
 
 /**
+ * 3. Re-apply bye auto-advancement for a bracket.
+ *    If a match has exactly one team and no winner, mark it complete and
+ *    advance that team. This repairs accidental undo of byes.
+ */
+async function autoAdvanceByes(bracketId: string) {
+  const { data: matches, error } = await supabase
+    .from("matches")
+    .select(
+      "id, round, index_in_round, team_a_id, team_b_id, winner_team_id, score_a, score_b, status",
+    )
+    .eq("bracket_id", bracketId)
+    .order("round", { ascending: true })
+    .order("index_in_round", { ascending: true });
+
+  if (error || !matches) {
+    throw new Error("Failed to load matches for bye recovery.");
+  }
+
+  for (const match of matches) {
+    const hasTeamA = !!match.team_a_id;
+    const hasTeamB = !!match.team_b_id;
+
+    if (match.winner_team_id || match.status === "COMPLETED") {
+      continue;
+    }
+
+    if (hasTeamA === hasTeamB) {
+      continue;
+    }
+
+    const winnerId = (match.team_a_id ?? match.team_b_id)!;
+
+    const { error: winnerUpdateError } = await supabase
+      .from("matches")
+      .update({
+        winner_team_id: winnerId,
+        status: "COMPLETED",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", match.id);
+
+    if (winnerUpdateError) {
+      throw new Error("Failed to restore bye winner.");
+    }
+
+    const nextRound = match.round + 1;
+    const nextMatchIndex = getNextMatchIndex(match.index_in_round);
+    const nextSlot = getNextMatchSlot(match.index_in_round);
+
+    const { data: nextMatch } = await supabase
+      .from("matches")
+      .select("id, team_a_id, team_b_id")
+      .eq("bracket_id", bracketId)
+      .eq("round", nextRound)
+      .eq("index_in_round", nextMatchIndex)
+      .maybeSingle();
+
+    if (!nextMatch) {
+      continue;
+    }
+
+    const existingSlotValue =
+      nextSlot === "team_a_id" ? nextMatch.team_a_id : nextMatch.team_b_id;
+
+    if (!existingSlotValue || existingSlotValue === winnerId) {
+      const { error: advanceError } = await supabase
+        .from("matches")
+        .update({ [nextSlot]: winnerId, updated_at: new Date().toISOString() })
+        .eq("id", nextMatch.id);
+
+      if (advanceError) {
+        throw new Error("Failed to re-advance bye winner.");
+      }
+    }
+  }
+}
+
+/**
  * 3. Recursively clear a completed or partially derived downstream branch.
  */
 async function clearDownstreamBranch(match: MatchRow) {
@@ -122,8 +200,19 @@ export async function undoMatchResult(matchId: string) {
     throw new Error("Only completed matches can be undone.");
   }
 
+  const isByeMatch =
+    (match.team_a_id && !match.team_b_id) ||
+    (!match.team_a_id && match.team_b_id);
+
+  if (isByeMatch) {
+    throw new Error(
+      "Bye matches cannot be undone. Use bracket reset or manual seeding instead.",
+    );
+  }
+
   await clearMatchResult(match.id);
   await removeAdvancedWinnerFromNextMatch(match as MatchRow);
+  await autoAdvanceByes(match.bracket_id);
 
   revalidatePath("/admin/overrides");
   revalidatePath("/admin/scoring");

@@ -221,18 +221,22 @@ export function AdminBracketsClient({
                       >
                         Generate Bracket
                       </Button>
-                      <Button
-                        disabled={!canPublish || isPending}
-                        onClick={() => handlePublish(bracket.type)}
-                      >
-                        Publish
-                      </Button>
-                      <Button
-                        disabled={!canUnpublish || isPending}
-                        onClick={() => handleUnpublish(bracket.type)}
-                      >
-                        Unpublish
-                      </Button>
+                      {canPublish && (
+                        <Button
+                          disabled={isPending}
+                          onClick={() => handlePublish(bracket.type)}
+                        >
+                          Publish
+                        </Button>
+                      )}
+                      {canUnpublish && (
+                        <Button
+                          disabled={isPending}
+                          onClick={() => handleUnpublish(bracket.type)}
+                        >
+                          Unpublish
+                        </Button>
+                      )}
                       <Button onClick={() => openSeeding(bracket)}>
                         Edit Seeding
                       </Button>

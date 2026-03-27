@@ -1,6 +1,8 @@
 "use client";
 
-import { Button, Card, Empty, Space, Tabs, Tag, Typography } from "antd";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Button, Card, Empty, Space, Tabs, Tag, Typography, message } from "antd";
 import { undoMatchResult } from "@/app/admin/overrides/actions";
 
 type MatchRow = {
@@ -15,6 +17,10 @@ type MatchRow = {
 };
 
 function CompletedMatchesList({ matches }: { matches: MatchRow[] }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [messageApi, contextHolder] = message.useMessage();
+
   if (matches.length === 0) {
     return (
       <Card style={{ borderRadius: 12 }}>
@@ -25,6 +31,7 @@ function CompletedMatchesList({ matches }: { matches: MatchRow[] }) {
 
   return (
     <Space direction="vertical" size={16} className="w-full">
+      {contextHolder}
       {matches.map((match) => (
         <Card key={match.id} style={{ borderRadius: 12 }}>
           <Space direction="vertical" size={10} className="w-full">
@@ -32,26 +39,56 @@ function CompletedMatchesList({ matches }: { matches: MatchRow[] }) {
               <Typography.Text strong>
                 Round {match.round} · Match {match.index_in_round}
               </Typography.Text>
-              <Tag color="green">Completed</Tag>
+              <div className="flex items-center gap-2">
+                {((match.team_a && !match.team_b) ||
+                  (!match.team_a && match.team_b)) && (
+                  <Tag color="gold">Bye</Tag>
+                )}
+                <Tag color="green">Completed</Tag>
+              </div>
             </div>
 
             <Typography.Text>
-              {match.team_a?.name ?? "TBD"} {match.score_a ?? "-"}
+              {match.team_a?.name ?? "TBD"} {match.score_a ?? "—"}
             </Typography.Text>
 
             <Typography.Text>
-              {match.team_b?.name ?? "TBD"} {match.score_b ?? "-"}
+              {match.team_b?.name ?? "TBD"} {match.score_b ?? "—"}
             </Typography.Text>
 
             <Typography.Text type="secondary">
               Winner: {match.winner?.name ?? "Unknown"}
             </Typography.Text>
 
-            <form action={undoMatchResult.bind(null, match.id)}>
-              <Button danger htmlType="submit">
+            {((match.team_a && !match.team_b) ||
+              (!match.team_a && match.team_b)) ? (
+              <Typography.Text type="secondary">
+                Bye matches cannot be undone. Use reset bracket or manual
+                seeding.
+              </Typography.Text>
+            ) : (
+              <Button
+                danger
+                loading={isPending}
+                onClick={() =>
+                  startTransition(async () => {
+                    try {
+                      await undoMatchResult(match.id);
+                      messageApi.success("Match result undone.");
+                      router.refresh();
+                    } catch (error) {
+                      messageApi.error(
+                        error instanceof Error
+                          ? error.message
+                          : "Failed to undo result.",
+                      );
+                    }
+                  })
+                }
+              >
                 Undo Result
               </Button>
-            </form>
+            )}
           </Space>
         </Card>
       ))}

@@ -286,8 +286,92 @@ export async function updateMatchParticipants(
 ) {
   await requireAdmin();
 
+  if (!teamAId && !teamBId) {
+    throw new Error("At least one team must be assigned.");
+  }
+
   if (teamAId && teamBId && teamAId === teamBId) {
     throw new Error("A team cannot play itself.");
+  }
+
+  const { data: match, error: matchError } = await supabase
+    .from("matches")
+    .select("id, bracket_id, round, score_a, score_b, winner_team_id")
+    .eq("id", matchId)
+    .single();
+
+  if (matchError || !match) {
+    throw new Error("Match not found.");
+  }
+
+  if (match.round !== 1) {
+    throw new Error("Only round 1 matches can be manually seeded.");
+  }
+
+  if (
+    match.score_a !== null ||
+    match.score_b !== null ||
+    match.winner_team_id !== null
+  ) {
+    throw new Error("Cannot edit a match that already has a result.");
+  }
+
+  const { data: bracket, error: bracketError } = await supabase
+    .from("brackets")
+    .select("id, status")
+    .eq("id", match.bracket_id)
+    .single();
+
+  if (bracketError || !bracket) {
+    throw new Error("Bracket not found.");
+  }
+
+  if (bracket.status === "PUBLISHED") {
+    throw new Error("Unpublish the bracket before editing seeding.");
+  }
+
+  const teamIds = [teamAId, teamBId].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  if (teamIds.length > 0) {
+    const { count: validTeamsCount, error: validTeamsError } = await supabase
+      .from("teams")
+      .select("id", { count: "exact", head: true })
+      .eq("bracket_id", match.bracket_id)
+      .in("id", teamIds);
+
+    if (validTeamsError) {
+      throw new Error("Failed to validate teams.");
+    }
+
+    if ((validTeamsCount ?? 0) !== teamIds.length) {
+      throw new Error("All selected teams must belong to this bracket.");
+    }
+  }
+
+  // Prevent duplicate team assignments across round 1.
+  if (teamIds.length > 0) {
+    const { data: roundOneMatches, error: roundOneError } = await supabase
+      .from("matches")
+      .select("id, team_a_id, team_b_id")
+      .eq("bracket_id", match.bracket_id)
+      .eq("round", 1)
+      .neq("id", match.id);
+
+    if (roundOneError) {
+      throw new Error("Failed to validate round 1 assignments.");
+    }
+
+    const usedIds = new Set<string>();
+    for (const roundMatch of roundOneMatches ?? []) {
+      if (roundMatch.team_a_id) usedIds.add(roundMatch.team_a_id);
+      if (roundMatch.team_b_id) usedIds.add(roundMatch.team_b_id);
+    }
+
+    if (teamIds.some((id) => usedIds.has(id))) {
+      throw new Error("Each team can only appear once in round 1.");
+    }
   }
 
   const { error } = await supabase
