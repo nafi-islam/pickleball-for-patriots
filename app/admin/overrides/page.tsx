@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { AdminOverridesClient } from "@/components/admin/AdminOverridesClient";
 
+export const dynamic = "force-dynamic";
+
 type BracketType = "recreational" | "competitive";
 
 async function getCompletedMatches(bracketType: BracketType) {

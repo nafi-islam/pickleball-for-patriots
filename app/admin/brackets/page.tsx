@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { AdminBracketsClient } from "@/components/admin/AdminBracketsClient";
 
+export const dynamic = "force-dynamic";
+
 async function getBracketSummary(type: "recreational" | "competitive") {
   const { data: bracket } = await supabase
     .from("brackets")

@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { AdminScoringClient } from "@/components/admin/AdminScoringClient";
 
+export const dynamic = "force-dynamic";
+
 type BracketType = "recreational" | "competitive";
 
 async function getScorableMatches(bracketType: BracketType) {
