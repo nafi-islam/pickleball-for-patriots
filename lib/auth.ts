@@ -10,11 +10,5 @@ export async function requireAdmin() {
   }
 
   const user = await (await clerkClient()).users.getUser(userId);
-
-  if (user.privateMetadata.role !== "admin") {
-    // throw new Error("Forbidden");
-    redirect("/");
-  }
-
   return user;
 }
