@@ -9,17 +9,25 @@ export const fetchCache = "force-no-store";
 type BracketType = "recreational" | "competitive";
 
 async function getScorableMatches(bracketType: BracketType) {
-  const { data: bracket } = await supabase
+  const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id, type, status")
     .eq("type", bracketType)
     .single();
 
+  if (bracketError) {
+    console.error("[admin/scoring] bracket lookup failed", {
+      bracketType,
+      message: bracketError.message,
+    });
+  }
+
   if (!bracket) {
+    console.warn("[admin/scoring] bracket not found", { bracketType });
     return { bracket: null, matches: [] };
   }
 
-  const { data: matches } = await supabase
+  const { data: matches, error: matchesError } = await supabase
     .from("matches")
     .select(
       `
@@ -38,6 +46,14 @@ async function getScorableMatches(bracketType: BracketType) {
     .eq("bracket_id", bracket.id)
     .order("round", { ascending: true })
     .order("index_in_round", { ascending: true });
+
+  if (matchesError) {
+    console.error("[admin/scoring] match fetch failed", {
+      bracketType,
+      bracketId: bracket.id,
+      message: matchesError.message,
+    });
+  }
 
   return { bracket, matches: matches ?? [] };
 }

@@ -15,17 +15,25 @@ export default async function PublicBracketPage({ params }: PageProps) {
     notFound();
   }
 
-  const { data: bracket } = await supabase
+  const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id, type, status")
     .eq("type", bracketType)
     .single();
 
+  if (bracketError) {
+    console.error("[public/bracket] bracket lookup failed", {
+      bracketType,
+      message: bracketError.message,
+    });
+  }
+
   if (!bracket) {
+    console.warn("[public/bracket] bracket not found", { bracketType });
     notFound();
   }
 
-  const { data: matches } = await supabase
+  const { data: matches, error: matchesError } = await supabase
     .from("matches")
     .select(
       `
@@ -44,6 +52,14 @@ export default async function PublicBracketPage({ params }: PageProps) {
     .eq("bracket_id", bracket.id)
     .order("round", { ascending: true })
     .order("index_in_round", { ascending: true });
+
+  if (matchesError) {
+    console.error("[public/bracket] match fetch failed", {
+      bracketType,
+      bracketId: bracket.id,
+      message: matchesError.message,
+    });
+  }
 
   const normalizedMatches = (matches ?? []).map((match) => ({
     ...match,

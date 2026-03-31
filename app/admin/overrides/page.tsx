@@ -9,17 +9,25 @@ export const fetchCache = "force-no-store";
 type BracketType = "recreational" | "competitive";
 
 async function getCompletedMatches(bracketType: BracketType) {
-  const { data: bracket } = await supabase
+  const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id, type")
     .eq("type", bracketType)
     .single();
 
+  if (bracketError) {
+    console.error("[admin/overrides] bracket lookup failed", {
+      bracketType,
+      message: bracketError.message,
+    });
+  }
+
   if (!bracket) {
+    console.warn("[admin/overrides] bracket not found", { bracketType });
     return [];
   }
 
-  const { data: matches } = await supabase
+  const { data: matches, error: matchesError } = await supabase
     .from("matches")
     .select(
       `
@@ -38,6 +46,14 @@ async function getCompletedMatches(bracketType: BracketType) {
     .eq("status", "COMPLETED")
     .order("round", { ascending: true })
     .order("index_in_round", { ascending: true });
+
+  if (matchesError) {
+    console.error("[admin/overrides] match fetch failed", {
+      bracketType,
+      bracketId: bracket.id,
+      message: matchesError.message,
+    });
+  }
 
   return (matches ?? []).map((match) => ({
     ...match,

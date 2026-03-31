@@ -5,40 +5,80 @@ import { AdminBracketsClient } from "@/components/admin/AdminBracketsClient";
 export const dynamic = "force-dynamic";
 
 async function getBracketSummary(type: "recreational" | "competitive") {
-  const { data: bracket } = await supabase
+  const { data: bracket, error: bracketError } = await supabase
     .from("brackets")
     .select("id, type, status")
     .eq("type", type)
     .single();
 
+  if (bracketError) {
+    console.error("[admin/brackets] bracket lookup failed", {
+      bracketType: type,
+      message: bracketError.message,
+    });
+  }
+
   if (!bracket) {
+    console.warn("[admin/brackets] bracket not found", { bracketType: type });
     return null;
   }
 
-  const { count: activeTeamCount } = await supabase
+  const { count: activeTeamCount, error: activeTeamsError } = await supabase
     .from("teams")
     .select("id", { count: "exact", head: true })
     .eq("bracket_id", bracket.id)
     .eq("is_active", true);
 
-  const { count: matchCount } = await supabase
+  if (activeTeamsError) {
+    console.error("[admin/brackets] active teams lookup failed", {
+      bracketType: type,
+      bracketId: bracket.id,
+      message: activeTeamsError.message,
+    });
+  }
+
+  const { count: matchCount, error: matchCountError } = await supabase
     .from("matches")
     .select("id", { count: "exact", head: true })
     .eq("bracket_id", bracket.id);
 
-  const { data: teams } = await supabase
+  if (matchCountError) {
+    console.error("[admin/brackets] match count failed", {
+      bracketType: type,
+      bracketId: bracket.id,
+      message: matchCountError.message,
+    });
+  }
+
+  const { data: teams, error: teamsError } = await supabase
     .from("teams")
     .select("id, name")
     .eq("bracket_id", bracket.id)
     .eq("is_active", true)
     .order("created_at", { ascending: true });
 
-  const { data: roundOneMatches } = await supabase
+  if (teamsError) {
+    console.error("[admin/brackets] teams fetch failed", {
+      bracketType: type,
+      bracketId: bracket.id,
+      message: teamsError.message,
+    });
+  }
+
+  const { data: roundOneMatches, error: roundOneError } = await supabase
     .from("matches")
     .select("id, index_in_round, team_a_id, team_b_id")
     .eq("bracket_id", bracket.id)
     .eq("round", 1)
     .order("index_in_round", { ascending: true });
+
+  if (roundOneError) {
+    console.error("[admin/brackets] round one fetch failed", {
+      bracketType: type,
+      bracketId: bracket.id,
+      message: roundOneError.message,
+    });
+  }
 
   return {
     ...bracket,
