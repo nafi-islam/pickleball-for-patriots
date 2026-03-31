@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import {
@@ -214,6 +215,8 @@ export async function generateBracket(bracketType: BracketType) {
   }
 
   // 10) Success
+  revalidatePath("/admin/brackets");
+  revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
 }
 
@@ -242,6 +245,8 @@ export async function setBracketStatus(
     throw new Error("Failed to update bracket status.");
   }
 
+  revalidatePath("/admin/brackets");
+  revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
 }
 
@@ -276,6 +281,8 @@ export async function resetBracket(bracketType: BracketType) {
     throw new Error("Failed to reset bracket status.");
   }
 
+  revalidatePath("/admin/brackets");
+  revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
 }
 
