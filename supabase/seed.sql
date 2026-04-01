@@ -22,12 +22,16 @@ join (values
   ('recreational', 'Southside Smash', 'southside.smash@example.com'),
   ('recreational', 'Baseline Buddies', 'baseline.buddies@example.com'),
   ('recreational', 'Pickle Pioneers', 'pickle.pioneers@example.com'),
+  ('recreational', 'Courtside Crew', 'courtside.crew@example.com'),
+  ('recreational', 'Dink Patrol', 'dink.patrol@example.com'),
   ('competitive', 'Lone Star Lobs', 'lone.star.lobs@example.com'),
   ('competitive', 'Dink Dynasty', 'dink.dynasty@example.com'),
   ('competitive', 'Net Ninjas', 'net.ninjas@example.com'),
   ('competitive', 'Court Command', 'court.command@example.com'),
   ('competitive', 'Aggie Advantage', 'aggie.advantage@example.com'),
-  ('competitive', 'Texas Topspin', 'texas.topspin@example.com')
+  ('competitive', 'Texas Topspin', 'texas.topspin@example.com'),
+  ('competitive', 'Lob Stars', 'lob.stars@example.com'),
+  ('competitive', 'Spin Doctors', 'spin.doctors@example.com')
 ) as t(type, name, contact_email)
 on b.type = t.type;
 
@@ -47,6 +51,10 @@ join (values
   ('Baseline Buddies', 'Drew Patel', 'drew.patel@example.com'),
   ('Pickle Pioneers', 'Avery Kim', 'avery.kim@example.com'),
   ('Pickle Pioneers', 'Parker Ross', 'parker.ross@example.com'),
+  ('Courtside Crew', 'Elliot Ward', 'elliot.ward@example.com'),
+  ('Courtside Crew', 'Reagan Fox', 'reagan.fox@example.com'),
+  ('Dink Patrol', 'Sawyer Hunt', 'sawyer.hunt@example.com'),
+  ('Dink Patrol', 'Rowan Pierce', 'rowan.pierce@example.com'),
   ('Lone Star Lobs', 'Logan Price', 'logan.price@example.com'),
   ('Lone Star Lobs', 'Emerson Cole', 'emerson.cole@example.com'),
   ('Dink Dynasty', 'Harper Lane', 'harper.lane@example.com'),
@@ -58,7 +66,11 @@ join (values
   ('Aggie Advantage', 'Reese Parker', 'reese.parker@example.com'),
   ('Aggie Advantage', 'Cameron King', 'cameron.king@example.com'),
   ('Texas Topspin', 'Peyton Ward', 'peyton.ward@example.com'),
-  ('Texas Topspin', 'Kendall Fox', 'kendall.fox@example.com')
+  ('Texas Topspin', 'Kendall Fox', 'kendall.fox@example.com'),
+  ('Lob Stars', 'Sage Cooper', 'sage.cooper@example.com'),
+  ('Lob Stars', 'Jules Griffin', 'jules.griffin@example.com'),
+  ('Spin Doctors', 'Hayden Fox', 'hayden.fox@example.com'),
+  ('Spin Doctors', 'Micah Lane', 'micah.lane@example.com')
 ) as p(team_name, name, email)
 on t.name = p.team_name;
 

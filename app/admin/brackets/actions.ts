@@ -45,19 +45,42 @@ export async function generateBracket(bracketType: BracketType) {
     throw new Error("Bracket has already been generated.");
   }
 
-  // 4) Fetch active teams in registration order (deterministic seeding).
-  const { data: teams, error: teamsError } = await supabase
+  // 4) Determine if qualifying courts exist for this bracket.
+  const { count: courtCount, error: courtCountError } = await supabase
+    .from("qualifying_courts")
+    .select("id", { count: "exact", head: true })
+    .eq("bracket_id", bracket.id);
+
+  if (courtCountError) {
+    throw new Error("Failed to check qualifying courts.");
+  }
+
+  // 5) Fetch teams in registration order (deterministic seeding).
+  let teamQuery = supabase
     .from("teams")
     .select("id, name, created_at")
     .eq("bracket_id", bracket.id)
     .eq("is_active", true)
     .order("created_at", { ascending: true });
 
+  if ((courtCount ?? 0) > 0) {
+    teamQuery = teamQuery.eq("qualified", true);
+  }
+
+  const { data: teams, error: teamsError } = await teamQuery;
+
   if (teamsError || !teams) {
     throw new Error("Could not fetch active teams.");
   }
 
-  if (teams.length < 2) {
+  if ((courtCount ?? 0) > 0) {
+    const expectedQualified = (courtCount ?? 0) * 2;
+    if (teams.length !== expectedQualified) {
+      throw new Error(
+        "Qualifying is not complete. Select the top two teams from each court before generating the bracket.",
+      );
+    }
+  } else if (teams.length < 2) {
     throw new Error(
       "At least two active teams are required to generate a bracket.",
     );

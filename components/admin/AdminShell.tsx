@@ -30,6 +30,11 @@ const primaryItems: MenuItem[] = [
     icon: <TableOutlined />,
   },
   {
+    key: "/admin/qualifying",
+    label: <Link href="/admin/qualifying">Qualifying</Link>,
+    icon: <TableOutlined />,
+  },
+  {
     key: "/admin/brackets",
     label: <Link href="/admin/brackets">Brackets</Link>,
     icon: <BarChartOutlined />,

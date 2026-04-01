@@ -197,6 +197,9 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
               <Link href="/admin/teams">
                 <Button type="primary">Manage Teams</Button>
               </Link>
+              <Link href="/admin/qualifying">
+                <Button>Qualifying Courts</Button>
+              </Link>
               <Link href="/admin/brackets">
                 <Button>Generate Brackets</Button>
               </Link>
