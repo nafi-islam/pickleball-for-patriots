@@ -188,7 +188,12 @@ export async function generateQualifyingMatches(bracketType: BracketType) {
     const courtTeams = assignments
       .filter((assignment) => assignment.court_id === court.id)
       .sort((a, b) => a.position - b.position)
-      .map((assignment) => assignment.team as { id: string; name: string });
+      .map((assignment) => {
+        const team = Array.isArray(assignment.team)
+          ? assignment.team[0]
+          : assignment.team;
+        return team as { id: string; name: string };
+      });
 
     if (courtTeams.length < 2) {
       incompleteCourts.push(court.court_number);
