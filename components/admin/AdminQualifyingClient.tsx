@@ -20,7 +20,7 @@ import {
   Typography,
   message,
 } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, ScheduleOutlined } from "@ant-design/icons";
 import {
   autoAssignCourts,
   autoSelectQualifiers,
@@ -586,6 +586,7 @@ export function AdminQualifyingClient({
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <Space align="center">
+        <ScheduleOutlined className="text-gray-500" />
         <Typography.Title level={2} style={{ marginBottom: 0 }}>
           Qualifying Courts
         </Typography.Title>

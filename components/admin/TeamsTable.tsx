@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Space, Table, Tag, message } from "antd";
+import { Button, Descriptions, Space, Table, Tag, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { withdrawTeam } from "./actions";
 
@@ -32,11 +32,13 @@ export function TeamsTable({ teams }: { teams: TeamRow[] }) {
     {
       title: "Contact Email",
       dataIndex: "contact_email",
+      responsive: ["md"],
     },
     {
       title: "Players",
+      responsive: ["md"],
       render: (_, record) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           {record.players.map((player) => (
             <span key={player.email}>
               {player.name} ({player.email})
@@ -93,6 +95,37 @@ export function TeamsTable({ teams }: { teams: TeamRow[] }) {
         dataSource={teams}
         pagination={false}
         columns={columns}
+        size="small"
+        scroll={{ x: true }}
+        expandable={{
+          expandedRowRender: (record) => (
+            <Descriptions
+              size="small"
+              column={1}
+              items={[
+                {
+                  key: "contact",
+                  label: "Contact Email",
+                  children: record.contact_email,
+                },
+                {
+                  key: "players",
+                  label: "Players",
+                  children: (
+                    <Space orientation="vertical" size={0}>
+                      {record.players.map((player) => (
+                        <span key={player.email}>
+                          {player.name} ({player.email})
+                        </span>
+                      ))}
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+          ),
+          rowExpandable: () => true,
+        }}
       />
     </>
   );

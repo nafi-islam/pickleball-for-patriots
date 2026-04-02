@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Card, Empty, Select, Space, Tabs, Tag, Typography, message } from "antd";
+import { CheckCircleOutlined } from "@ant-design/icons";
 import ScoreForm from "@/components/admin/ScoreForm";
 import { setMatchCourt } from "@/app/admin/scoring/actions";
 
@@ -123,7 +124,12 @@ export function AdminScoringClient({
 }) {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Typography.Title level={2}>Scoring & Advancement</Typography.Title>
+      <Space align="center">
+        <CheckCircleOutlined className="text-gray-500" />
+        <Typography.Title level={2} style={{ marginBottom: 0 }}>
+          Scoring & Advancement
+        </Typography.Title>
+      </Space>
       <Typography.Paragraph type="secondary">
         Record match results and automatically advance winners through the
         bracket.

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Badge, Button, Card, Col, Row, Space, Tag, Typography } from "antd";
+import { DashboardOutlined } from "@ant-design/icons";
 
 type Stats = {
   totalTeams: number;
@@ -60,9 +61,12 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mt-3">
-        <Typography.Title level={2} style={{ marginBottom: 4 }}>
-          Admin Dashboard
-        </Typography.Title>
+        <Space align="center">
+          <DashboardOutlined className="text-gray-500" />
+          <Typography.Title level={2} style={{ marginBottom: 0 }}>
+            Admin Dashboard
+          </Typography.Title>
+        </Space>
         <Typography.Text type="secondary">
           Overview of registration health and tournament readiness.
         </Typography.Text>

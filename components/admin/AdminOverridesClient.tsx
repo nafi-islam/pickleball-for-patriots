@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button, Card, Empty, Space, Tabs, Tag, Typography, message } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import { undoMatchResult } from "@/app/admin/overrides/actions";
 
 type MatchRow = {
@@ -105,7 +106,12 @@ export function AdminOverridesClient({
 }) {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Typography.Title level={2}>Admin Overrides</Typography.Title>
+      <Space align="center">
+        <SettingOutlined className="text-gray-500" />
+        <Typography.Title level={2} style={{ marginBottom: 0 }}>
+          Admin Overrides
+        </Typography.Title>
+      </Space>
       <Typography.Paragraph type="secondary">
         Use this page to safely undo completed match results and clear downstream
         bracket state when a score was entered incorrectly.

@@ -52,7 +52,9 @@ export function PublicQualifyingClient({
           {bracketType === "recreational" ? "Recreational" : "Competitive"}{" "}
           Qualifying
         </Typography.Title>
-        <Empty description="Qualifying has not been published yet." />
+        <Card style={{ borderRadius: 12 }}>
+          <Empty description="Qualifying has not been published yet." />
+        </Card>
       </div>
     );
   }
@@ -64,7 +66,9 @@ export function PublicQualifyingClient({
           {bracketType === "recreational" ? "Recreational" : "Competitive"}{" "}
           Qualifying
         </Typography.Title>
-        <Empty description="Qualifying courts have not been set yet." />
+        <Card style={{ borderRadius: 12 }}>
+          <Empty description="Qualifying courts have not been set yet." />
+        </Card>
       </div>
     );
   }

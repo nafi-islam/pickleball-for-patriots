@@ -14,7 +14,7 @@ export default function ContactSection() {
                   alt="Ridge Robinson"
                   width={220}
                   height={220}
-                  className="rounded-2xl object-cover shadow-md"
+                  className="mx-auto sm:mx-0 rounded-2xl object-cover shadow-md"
                 />
               </Col>
               <Col xs={24} sm={16}>

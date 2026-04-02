@@ -1,6 +1,7 @@
 "use client";
 
-import { Tabs, Typography } from "antd";
+import { Space, Tabs, Typography } from "antd";
+import { TeamOutlined } from "@ant-design/icons";
 import { TeamsTable } from "@/components/admin/TeamsTable";
 
 type TeamRow = {
@@ -26,7 +27,12 @@ export function AdminTeamsClient({
 }: Props) {
   return (
     <div className="max-w-7xl mx-auto">
-      <Typography.Title level={2}>Team Management</Typography.Title>
+      <Space align="center">
+        <TeamOutlined className="text-gray-500" />
+        <Typography.Title level={2} style={{ marginBottom: 0 }}>
+          Team Management
+        </Typography.Title>
+      </Space>
 
       <Tabs
         items={[

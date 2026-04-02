@@ -9,6 +9,10 @@ import {
   MenuOutlined,
   SettingOutlined,
   TableOutlined,
+  TeamOutlined,
+  TrophyOutlined,
+  ScheduleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { UserButton } from "@clerk/nextjs";
 
@@ -27,22 +31,22 @@ const primaryItems: MenuItem[] = [
   {
     key: "/admin/teams",
     label: <Link href="/admin/teams">Teams</Link>,
-    icon: <TableOutlined />,
+    icon: <TeamOutlined />,
   },
   {
     key: "/admin/qualifying",
     label: <Link href="/admin/qualifying">Qualifying</Link>,
-    icon: <TableOutlined />,
+    icon: <ScheduleOutlined />,
   },
   {
     key: "/admin/brackets",
     label: <Link href="/admin/brackets">Brackets</Link>,
-    icon: <BarChartOutlined />,
+    icon: <TrophyOutlined />,
   },
   {
     key: "/admin/scoring",
     label: <Link href="/admin/scoring">Scoring</Link>,
-    icon: <TableOutlined />,
+    icon: <CheckCircleOutlined />,
   },
   {
     key: "/admin/overrides",

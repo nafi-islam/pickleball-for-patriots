@@ -18,7 +18,7 @@ import {
   Typography,
   message,
 } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, TrophyOutlined } from "@ant-design/icons";
 import {
   generateBracket,
   resetBracket,
@@ -168,6 +168,7 @@ export function AdminBracketsClient({
     <div className="max-w-6xl mx-auto">
       {contextHolder}
       <Space align="center">
+        <TrophyOutlined className="text-gray-500" />
         <Typography.Title level={2} style={{ marginBottom: 0 }}>
           Bracket Generation
         </Typography.Title>
