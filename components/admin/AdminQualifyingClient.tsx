@@ -10,6 +10,7 @@ import {
   Drawer,
   Empty,
   InputNumber,
+  Modal,
   Row,
   Select,
   Space,
@@ -236,14 +237,50 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
 
   const handleSaveSeeding = async (courtId: string) => {
     const selection = seedSelections[courtId] ?? [];
-    try {
-      await updateCourtAssignments(courtId, selection);
-      toast.success("Court assignments updated.");
-      router.refresh();
-      setEditingCourt(null);
-    } catch (error) {
-      toast.error((error as Error).message);
+    const currentAssignments = assignmentsByCourt.get(courtId) ?? [];
+    const teamCourtMap = new Map<string, string>();
+    for (const [courtKey, list] of assignmentsByCourt.entries()) {
+      for (const assignment of list) {
+        if (assignment.team?.id) {
+          teamCourtMap.set(assignment.team.id, courtKey);
+        }
+      }
     }
+
+    const conflicts = selection
+      .filter((teamId): teamId is string => Boolean(teamId))
+      .filter((teamId) => {
+        const assignedCourt = teamCourtMap.get(teamId);
+        return assignedCourt && assignedCourt !== courtId;
+      });
+
+    const onConfirm = async () => {
+      try {
+        await updateCourtAssignments(courtId, selection);
+        toast.success("Court assignments updated.");
+        router.refresh();
+        setEditingCourt(null);
+      } catch (error) {
+        toast.error((error as Error).message);
+      }
+    };
+
+    if (
+      conflicts.length > 0 ||
+      selection.filter(Boolean).length !== currentAssignments.length
+    ) {
+      Modal.confirm({
+        title: "Update court assignments?",
+        content:
+          "This will clear matches for this court and any other court that currently contains these teams.",
+        okText: "Update",
+        okButtonProps: { danger: true },
+        onOk: onConfirm,
+      });
+      return;
+    }
+
+    await onConfirm();
   };
 
   return (

@@ -323,6 +323,14 @@ export async function reportQualifyingScore(
   // 1) Admin gate.
   await requireAdmin();
 
+  if (!Number.isInteger(scoreA) || !Number.isInteger(scoreB)) {
+    throw new Error("Scores must be whole numbers.");
+  }
+
+  if (scoreA < 0 || scoreB < 0) {
+    throw new Error("Scores cannot be negative.");
+  }
+
   if (scoreA === scoreB) {
     throw new Error("Qualifying matches cannot end in a tie.");
   }

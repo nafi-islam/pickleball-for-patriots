@@ -191,11 +191,15 @@ export function AdminBracketsClient({
       ) : (
         <Row gutter={[16, 16]}>
           {brackets.map((bracket) => {
+            const needsQualified =
+              bracket.courtCount > 0 && bracket.qualifiedTeamCount < 2;
+
             const generationDisabled =
               bracket.activeTeamCount < 2 ||
               bracket.matchCount > 0 ||
               bracket.status === "GENERATED" ||
               bracket.status === "PUBLISHED" ||
+              needsQualified ||
               isPending;
             const canPublish =
               bracket.matchCount > 0 && bracket.status !== "PUBLISHED";
@@ -231,6 +235,12 @@ export function AdminBracketsClient({
                     <Typography.Text>
                       Existing matches: {bracket.matchCount}
                     </Typography.Text>
+                    {needsQualified && (
+                      <Typography.Text type="warning">
+                        Qualifying is not complete. Select advancing teams
+                        before generating the bracket.
+                      </Typography.Text>
+                    )}
 
                     <Space wrap>
                       <Button
