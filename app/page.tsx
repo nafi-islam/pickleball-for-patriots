@@ -100,6 +100,13 @@ export default function HomePage() {
                     <Link href="/signup/competitive">
                       <Button size="large">Competitive Bracket</Button>
                     </Link>
+                    <a
+                      href="https://www.youtube.com/watch?v=Aq5WXmQQooo"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button size="large">Buy Shirts</Button>
+                    </a>
                   </Space>
                 </Space>
               </div>
