@@ -238,7 +238,14 @@ async function recomputeCourtStats(courtId: string) {
     throw new Error("Failed to load court assignments.");
   }
 
-  const teams = assignments.map((assignment) => assignment.team as { id: string; name: string });
+  const teams = assignments
+    .map((assignment) => {
+      const team = Array.isArray(assignment.team)
+        ? assignment.team[0]
+        : assignment.team;
+      return team as { id: string; name: string };
+    })
+    .filter(Boolean);
 
   const { data: matches, error: matchesError } = await supabase
     .from("qualifying_matches")
