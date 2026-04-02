@@ -14,9 +14,11 @@ import {
   Select,
   Space,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import {
   generateBracket,
   resetBracket,
@@ -29,6 +31,8 @@ type BracketSummary = {
   type: "recreational" | "competitive";
   status: string;
   activeTeamCount: number;
+  qualifiedTeamCount: number;
+  courtCount: number;
   matchCount: number;
   teams: Array<{ id: string; name: string }>;
   roundOneMatches: Array<{
@@ -163,7 +167,17 @@ export function AdminBracketsClient({
   return (
     <div className="max-w-6xl mx-auto">
       {contextHolder}
-      <Typography.Title level={2}>Bracket Generation</Typography.Title>
+      <Space align="center">
+        <Typography.Title level={2} style={{ marginBottom: 0 }}>
+          Bracket Generation
+        </Typography.Title>
+        <Tooltip
+          placement="right"
+          title="Brackets use qualified teams when courts exist. Teams are seeded by registration order. Byes fill empty slots to reach a power of two."
+        >
+          <InfoCircleOutlined className="text-gray-500" />
+        </Tooltip>
+      </Space>
       <Typography.Paragraph type="secondary">
         Generate the tournament bracket once registration is finalized. This
         creates all matches for the selected bracket and handles byes
@@ -207,6 +221,12 @@ export function AdminBracketsClient({
                     <Typography.Text>
                       Active teams: {bracket.activeTeamCount}
                     </Typography.Text>
+
+                    {bracket.courtCount > 0 && (
+                      <Typography.Text>
+                        Qualified teams: {bracket.qualifiedTeamCount}
+                      </Typography.Text>
+                    )}
 
                     <Typography.Text>
                       Existing matches: {bracket.matchCount}

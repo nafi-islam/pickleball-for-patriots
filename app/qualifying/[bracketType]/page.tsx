@@ -19,7 +19,7 @@ export default async function PublicQualifyingPage({ params }: PageProps) {
 
   const { data: bracket } = await supabase
     .from("brackets")
-    .select("id, type")
+    .select("id, type, qualifying_status")
     .eq("type", bracketType)
     .single();
 
@@ -79,6 +79,7 @@ export default async function PublicQualifyingPage({ params }: PageProps) {
   return (
     <PublicQualifyingClient
       bracketType={bracketType as "recreational" | "competitive"}
+      status={bracket.qualifying_status ?? "DRAFT"}
       courts={courts ?? []}
       assignments={(assignments ?? []).map((assignment) => ({
         ...assignment,

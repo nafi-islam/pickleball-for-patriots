@@ -11,7 +11,7 @@ type BracketType = "recreational" | "competitive";
 async function fetchQualifyingData(bracketType: BracketType) {
   const { data: bracket } = await supabase
     .from("brackets")
-    .select("id, type")
+    .select("id, type, qualifying_status")
     .eq("type", bracketType)
     .single();
 
@@ -69,17 +69,12 @@ async function fetchQualifyingData(bracketType: BracketType) {
       ).data
     : [];
 
-  const { count: activeTeams } = await supabase
+  const { data: teams } = await supabase
     .from("teams")
-    .select("id", { count: "exact", head: true })
+    .select("id, name, is_active, qualified")
     .eq("bracket_id", bracket.id)
-    .eq("is_active", true);
-
-  const { count: qualifiedTeams } = await supabase
-    .from("teams")
-    .select("id", { count: "exact", head: true })
-    .eq("bracket_id", bracket.id)
-    .eq("qualified", true);
+    .eq("is_active", true)
+    .order("created_at", { ascending: true });
 
   return {
     bracket,
@@ -97,8 +92,9 @@ async function fetchQualifyingData(bracketType: BracketType) {
       winner: Array.isArray(match.winner) ? match.winner[0] ?? null : match.winner,
     })),
     stats: stats ?? [],
-    activeTeams: activeTeams?.count ?? 0,
-    qualifiedTeams: qualifiedTeams?.count ?? 0,
+    teams: teams ?? [],
+    activeTeams: teams?.length ?? 0,
+    qualifiedTeams: teams?.filter((team) => team.qualified).length ?? 0,
   };
 }
 

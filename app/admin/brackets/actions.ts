@@ -74,10 +74,9 @@ export async function generateBracket(bracketType: BracketType) {
   }
 
   if ((courtCount ?? 0) > 0) {
-    const expectedQualified = (courtCount ?? 0) * 2;
-    if (teams.length !== expectedQualified) {
+    if (teams.length < 2) {
       throw new Error(
-        "Qualifying is not complete. Select the top two teams from each court before generating the bracket.",
+        "Qualifying is not complete. Select advancing teams before generating the bracket.",
       );
     }
   } else if (teams.length < 2) {

@@ -7,21 +7,60 @@ export const QUALIFYING_MATCH_ORDER: Array<[number, number]> = [
   [1, 2],
 ];
 
+// Qualifying rules:
+// - Courts contain 2–4 teams.
+// - 4 teams: single round robin (6 matches).
+// - 3 teams: double round robin (6 matches).
+// - 2 teams: best-of-3 style (3 matches).
+// - Ranking: wins, then point differential, then points scored.
 type TeamSeed = {
   id: string;
   name: string;
 };
 
 export function buildRoundRobinMatches(teams: TeamSeed[]) {
-  if (teams.length !== 4) {
-    throw new Error("Qualifying courts must have exactly 4 teams.");
+  if (teams.length < 2) {
+    throw new Error("Qualifying courts must have at least 2 teams.");
   }
 
-  return QUALIFYING_MATCH_ORDER.map(([a, b], idx) => ({
-    match_index: idx + 1,
-    team_a_id: teams[a].id,
-    team_b_id: teams[b].id,
-  }));
+  if (teams.length === 4) {
+    return QUALIFYING_MATCH_ORDER.map(([a, b], idx) => ({
+      match_index: idx + 1,
+      team_a_id: teams[a].id,
+      team_b_id: teams[b].id,
+    }));
+  }
+
+  if (teams.length === 3) {
+    const order: Array<[number, number]> = [
+      [0, 1],
+      [1, 2],
+      [0, 2],
+      [0, 1],
+      [1, 2],
+      [0, 2],
+    ];
+    return order.map(([a, b], idx) => ({
+      match_index: idx + 1,
+      team_a_id: teams[a].id,
+      team_b_id: teams[b].id,
+    }));
+  }
+
+  if (teams.length === 2) {
+    const order: Array<[number, number]> = [
+      [0, 1],
+      [0, 1],
+      [0, 1],
+    ];
+    return order.map(([a, b], idx) => ({
+      match_index: idx + 1,
+      team_a_id: teams[a].id,
+      team_b_id: teams[b].id,
+    }));
+  }
+
+  throw new Error("Qualifying courts support 2, 3, or 4 teams.");
 }
 
 export type QualifyingStat = {

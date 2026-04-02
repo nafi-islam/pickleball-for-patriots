@@ -50,6 +50,17 @@ async function getBracketSummary(type: "recreational" | "competitive") {
     });
   }
 
+  const { count: qualifiedTeamCount } = await supabase
+    .from("teams")
+    .select("id", { count: "exact", head: true })
+    .eq("bracket_id", bracket.id)
+    .eq("qualified", true);
+
+  const { count: courtCount } = await supabase
+    .from("qualifying_courts")
+    .select("id", { count: "exact", head: true })
+    .eq("bracket_id", bracket.id);
+
   const { data: teams, error: teamsError } = await supabase
     .from("teams")
     .select("id, name")
@@ -83,6 +94,8 @@ async function getBracketSummary(type: "recreational" | "competitive") {
   return {
     ...bracket,
     activeTeamCount: activeTeamCount ?? 0,
+    qualifiedTeamCount: qualifiedTeamCount ?? 0,
+    courtCount: courtCount ?? 0,
     matchCount: matchCount ?? 0,
     teams: teams ?? [],
     roundOneMatches: roundOneMatches ?? [],

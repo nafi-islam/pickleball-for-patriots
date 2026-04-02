@@ -1,10 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
   Col,
+  Collapse,
+  Drawer,
   Empty,
   InputNumber,
   Row,
@@ -12,16 +15,20 @@ import {
   Space,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import {
   autoAssignCourts,
   autoSelectQualifiers,
   generateQualifyingMatches,
   reportQualifyingScore,
   resetQualifying,
+  setQualifyingStatus,
   setCourtQualifiers,
+  updateCourtAssignments,
 } from "@/app/admin/qualifying/actions";
 
 type Team = { id: string; name: string; qualified?: boolean | null };
@@ -53,20 +60,30 @@ type Stat = {
 };
 
 type BracketData = {
-  bracket: { id: string; type: "recreational" | "competitive" };
+  bracket: {
+    id: string;
+    type: "recreational" | "competitive";
+    qualifying_status?: string | null;
+  };
   courts: Array<{ id: string; court_number: number }>;
   assignments: Assignment[];
   matches: Match[];
   stats: Stat[];
   activeTeams: number;
   qualifiedTeams: number;
+  teams: Array<{ id: string; name: string }>;
 };
 
 function QualifyingSection({ data }: { data: BracketData | null }) {
   const [toast, contextHolder] = message.useMessage();
+  const router = useRouter();
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
   const [qualifierSelections, setQualifierSelections] = useState<
     Record<string, string[]>
+  >({});
+  const [editingCourt, setEditingCourt] = useState<string | null>(null);
+  const [seedSelections, setSeedSelections] = useState<
+    Record<string, Array<string | null>>
   >({});
   const [scoreInputs, setScoreInputs] = useState<
     Record<string, { scoreA: number | null; scoreB: number | null }>
@@ -77,6 +94,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
   }
 
   const { bracket, courts, assignments, matches, stats } = data;
+  const allTeams = data.teams ?? [];
 
   const assignmentsByCourt = useMemo(() => {
     const map = new Map<string, Assignment[]>();
@@ -133,6 +151,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
       }
       await reportQualifyingScore(matchId, scoreA, scoreB);
       toast.success("Qualifying score saved.");
+      router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
@@ -144,6 +163,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     try {
       await autoAssignCourts(bracket.type);
       toast.success("Courts assigned.");
+      router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -153,6 +173,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     try {
       await generateQualifyingMatches(bracket.type);
       toast.success("Qualifying matches generated.");
+      router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -162,6 +183,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     try {
       await autoSelectQualifiers(bracket.type);
       toast.success("Top two teams selected for each court.");
+      router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -171,6 +193,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     try {
       await resetQualifying(bracket.type);
       toast.success("Qualifying stage reset.");
+      router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -181,6 +204,43 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     try {
       await setCourtQualifiers(courtId, selection);
       toast.success("Qualifiers updated.");
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  const handlePublishToggle = async (status: "PUBLISHED" | "DRAFT") => {
+    try {
+      await setQualifyingStatus(bracket.type, status);
+      toast.success(
+        status === "PUBLISHED"
+          ? "Qualifying published."
+          : "Qualifying unpublished.",
+      );
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  const handleOpenSeeding = (courtId: string) => {
+    const courtAssignments = assignmentsByCourt.get(courtId) ?? [];
+    const sorted = [...courtAssignments].sort((a, b) => a.position - b.position);
+    setSeedSelections((prev) => ({
+      ...prev,
+      [courtId]: Array.from({ length: 4 }, (_, idx) => sorted[idx]?.team?.id ?? null),
+    }));
+    setEditingCourt(courtId);
+  };
+
+  const handleSaveSeeding = async (courtId: string) => {
+    const selection = seedSelections[courtId] ?? [];
+    try {
+      await updateCourtAssignments(courtId, selection);
+      toast.success("Court assignments updated.");
+      router.refresh();
+      setEditingCourt(null);
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -198,12 +258,40 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
             Active teams: {data.activeTeams} · Qualified teams:{" "}
             {data.qualifiedTeams}
           </Typography.Text>
+          <Typography.Text type="secondary">
+            Courts with 2-4 teams can generate qualifying matches. Top two
+            advance when available.
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            Status:{" "}
+            <Tag color={bracket.qualifying_status === "PUBLISHED" ? "green" : "default"}>
+              {bracket.qualifying_status ?? "DRAFT"}
+            </Tag>
+          </Typography.Text>
+          {courts.length > 0 &&
+            courts.some(
+              (court) => (assignmentsByCourt.get(court.id)?.length ?? 0) < 2,
+            ) && (
+              <Typography.Text type="warning">
+                One or more courts have fewer than 2 teams. Complete assignments
+                before generating matches.
+              </Typography.Text>
+            )}
           <Space wrap>
             <Button type="primary" onClick={handleAutoAssign}>
               Auto-assign Courts
             </Button>
             <Button onClick={handleGenerate}>Generate Matches</Button>
             <Button onClick={handleAutoQualify}>Auto-select Qualifiers</Button>
+            {bracket.qualifying_status === "PUBLISHED" ? (
+              <Button onClick={() => handlePublishToggle("DRAFT")}>
+                Unpublish Qualifying
+              </Button>
+            ) : (
+              <Button onClick={() => handlePublishToggle("PUBLISHED")}>
+                Publish Qualifying
+              </Button>
+            )}
             <Button danger onClick={handleReset}>
               Reset Qualifying
             </Button>
@@ -214,8 +302,9 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
       {courts.length === 0 ? (
         <Empty description="No courts assigned yet." />
       ) : (
-        <Row gutter={[16, 16]}>
-          {courts.map((court) => {
+        <Collapse
+          className="bg-transparent"
+          items={courts.map((court) => {
             const courtAssignments = assignmentsByCourt.get(court.id) ?? [];
             const courtMatches = matchesByCourt.get(court.id) ?? [];
             const courtStats = statsByCourt.get(court.id) ?? [];
@@ -224,10 +313,17 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
               .filter(Boolean)
               .map((team) => ({ label: team!.name, value: team!.id }));
 
-            return (
-              <Col xs={24} lg={12} key={court.id}>
-                <Card title={`Court ${court.court_number}`}>
+            return {
+              key: court.id,
+              label: `Court ${court.court_number}`,
+              children: (
+                <Card bordered={false} className="shadow-none">
                   <Space direction="vertical" size="middle" className="w-full">
+                    <Space wrap>
+                      <Button onClick={() => handleOpenSeeding(court.id)}>
+                        Edit Seeding
+                      </Button>
+                    </Space>
                     <div>
                       <Typography.Text strong>Teams</Typography.Text>
                       <ul className="mt-2">
@@ -241,6 +337,11 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                             ) : null}
                           </li>
                         ))}
+                        {courtAssignments.length < 4 ? (
+                          <li className="text-gray-500">
+                            {4 - courtAssignments.length} open slot(s)
+                          </li>
+                        ) : null}
                       </ul>
                     </div>
 
@@ -251,15 +352,16 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                           No standings yet.
                         </Typography.Paragraph>
                       ) : (
-                        <ul className="mt-2">
+                        <ul className="mt-2 space-y-1">
                           {courtStats.map((stat) => {
                             const team = courtAssignments.find(
                               (assignment) => assignment.team?.id === stat.team_id,
                             )?.team;
                             return (
-                              <li key={stat.team_id}>
-                                {team?.name ?? "Team"} · {stat.wins}-{stat.losses} ·
-                                Diff {stat.differential}
+                              <li key={stat.team_id} className="flex flex-wrap items-center gap-2">
+                                <span>{team?.name ?? "Team"}</span>
+                                <Tag>{stat.wins}-{stat.losses}</Tag>
+                                <Tag color="blue">Diff {stat.differential}</Tag>
                               </li>
                             );
                           })}
@@ -277,8 +379,8 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                         <Space direction="vertical" className="w-full">
                           {courtMatches.map((match) => (
                             <Card key={match.id} size="small">
-                              <Typography.Text>
-                                Match {match.match_index}
+                              <Typography.Text type="secondary">
+                                Game {match.match_index}
                               </Typography.Text>
                               <div className="mt-2">
                                 <Typography.Text>
@@ -287,7 +389,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                                 </Typography.Text>
                               </div>
                               <div className="mt-2">
-                                <Space>
+                                <Space wrap>
                                   <InputNumber
                                     min={0}
                                     placeholder="Score A"
@@ -350,9 +452,9 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                                 </Space>
                               </div>
                               {match.status === "COMPLETED" ? (
-                                <Typography.Text type="secondary">
-                                  Final: {match.score_a} - {match.score_b}
-                                </Typography.Text>
+                                <Tag color="blue">
+                                  Final {match.score_a}-{match.score_b}
+                                </Tag>
                               ) : null}
                             </Card>
                           ))}
@@ -366,7 +468,8 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                         <Select
                           mode="multiple"
                           maxCount={2}
-                          placeholder="Select two advancing teams"
+                          placeholder="Select advancing teams"
+                          className="w-full"
                           options={teamOptions}
                           value={qualifierSelections[court.id]}
                           onChange={(value) =>
@@ -383,11 +486,55 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                     </div>
                   </Space>
                 </Card>
-              </Col>
-            );
+              ),
+            };
           })}
-        </Row>
+        />
       )}
+
+      <Drawer
+        open={Boolean(editingCourt)}
+        onClose={() => setEditingCourt(null)}
+        title="Edit Seeding"
+        size="large"
+      >
+        {editingCourt ? (
+          <Space direction="vertical" className="w-full">
+            <Typography.Text type="secondary">
+              Updating seeding clears matches for this court and any other court
+              that had these teams assigned.
+            </Typography.Text>
+            {[0, 1, 2, 3].map((idx) => (
+              <Select
+                key={idx}
+                placeholder={`Slot ${idx + 1}`}
+                allowClear
+                options={allTeams.map((team) => ({
+                  label: team.name,
+                  value: team.id,
+                }))}
+                value={seedSelections[editingCourt]?.[idx] ?? null}
+                onChange={(value) =>
+                  setSeedSelections((prev) => ({
+                    ...prev,
+                    [editingCourt]: [
+                      ...(prev[editingCourt] ?? [null, null, null, null]),
+                    ].map((entry, index) =>
+                      index === idx ? value ?? null : entry ?? null,
+                    ),
+                  }))
+                }
+              />
+            ))}
+            <Space wrap>
+              <Button onClick={() => setEditingCourt(null)}>Cancel</Button>
+              <Button type="primary" onClick={() => handleSaveSeeding(editingCourt)}>
+                Save Seeding
+              </Button>
+            </Space>
+          </Space>
+        ) : null}
+      </Drawer>
     </Space>
   );
 }
@@ -401,7 +548,17 @@ export function AdminQualifyingClient({
 }) {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Typography.Title level={2}>Qualifying Courts</Typography.Title>
+      <Space align="center">
+        <Typography.Title level={2} style={{ marginBottom: 0 }}>
+          Qualifying Courts
+        </Typography.Title>
+        <Tooltip
+          placement="right"
+          title="Assign teams to courts, record round robin scores, and select the top two teams per court to advance to the bracket."
+        >
+          <InfoCircleOutlined className="text-gray-500" />
+        </Tooltip>
+      </Space>
       <Typography.Paragraph type="secondary">
         Assign teams to courts, record round robin results, and confirm the top
         two teams advancing to the bracket.

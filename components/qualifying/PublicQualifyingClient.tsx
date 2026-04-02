@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Col, Empty, Row, Space, Tag, Typography } from "antd";
+import { Card, Collapse, Empty, Space, Tag, Typography } from "antd";
 
 type Team = { id: string; name: string };
 type Assignment = {
@@ -30,6 +30,7 @@ type Stat = {
 
 type Props = {
   bracketType: "recreational" | "competitive";
+  status: string;
   courts: Array<{ id: string; court_number: number }>;
   assignments: Assignment[];
   matches: Match[];
@@ -38,11 +39,24 @@ type Props = {
 
 export function PublicQualifyingClient({
   bracketType,
+  status,
   courts,
   assignments,
   matches,
   stats,
 }: Props) {
+  if (status !== "PUBLISHED") {
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <Typography.Title level={2}>
+          {bracketType === "recreational" ? "Recreational" : "Competitive"}{" "}
+          Qualifying
+        </Typography.Title>
+        <Empty description="Qualifying has not been published yet." />
+      </div>
+    );
+  }
+
   if (courts.length === 0) {
     return (
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -99,18 +113,22 @@ export function PublicQualifyingClient({
         Courts play a 4-team round robin. The top two teams by wins (then point
         differential) advance to the bracket.
       </Typography.Paragraph>
-      <Row gutter={[16, 16]}>
-        {courts.map((court) => {
+      <Collapse
+        className="bg-transparent"
+        items={courts.map((court) => {
           const courtAssignments = assignmentsByCourt.get(court.id) ?? [];
           const courtMatches = matchesByCourt.get(court.id) ?? [];
           const courtStats = statsByCourt.get(court.id) ?? [];
-          return (
-            <Col xs={24} lg={12} key={court.id}>
-              <Card title={`Court ${court.court_number}`}>
+
+          return {
+            key: court.id,
+            label: `Court ${court.court_number}`,
+            children: (
+              <Card bordered={false} className="shadow-none">
                 <Space direction="vertical" size="middle" className="w-full">
                   <div>
                     <Typography.Text strong>Teams</Typography.Text>
-                    <ul className="mt-2">
+                    <ul className="mt-2 space-y-1">
                       {courtAssignments.map((assignment) => (
                         <li key={`${assignment.court_id}-${assignment.position}`}>
                           {assignment.team?.name ?? "TBD"}
@@ -126,16 +144,17 @@ export function PublicQualifyingClient({
                         Standings update as scores are recorded.
                       </Typography.Paragraph>
                     ) : (
-                      <ul className="mt-2">
+                      <ul className="mt-2 space-y-1">
                         {courtStats.map((stat, idx) => {
                           const teamName =
                             courtAssignments.find(
                               (assignment) => assignment.team?.id === stat.team_id,
                             )?.team?.name ?? "Team";
                           return (
-                            <li key={stat.team_id}>
-                              {teamName} · {stat.wins}-{stat.losses} · Diff{" "}
-                              {stat.differential}{" "}
+                            <li key={stat.team_id} className="flex flex-wrap items-center gap-2">
+                              <span>{teamName}</span>
+                              <Tag>{stat.wins}-{stat.losses}</Tag>
+                              <Tag color="blue">Diff {stat.differential}</Tag>
                               {idx < 2 ? <Tag color="green">Top 2</Tag> : null}
                             </li>
                           );
@@ -151,17 +170,20 @@ export function PublicQualifyingClient({
                         Matches not generated yet.
                       </Typography.Paragraph>
                     ) : (
-                      <ul className="mt-2">
+                      <ul className="mt-2 space-y-1">
                         {courtMatches.map((match) => (
-                          <li key={match.id}>
-                            Match {match.match_index}:{" "}
-                            {match.team_a?.name ?? "TBD"} vs{" "}
-                            {match.team_b?.name ?? "TBD"}{" "}
+                          <li key={match.id} className="flex flex-wrap items-center gap-2">
+                            <span>
+                              {match.team_a?.name ?? "TBD"} vs{" "}
+                              {match.team_b?.name ?? "TBD"}
+                            </span>
                             {match.status === "COMPLETED" ? (
                               <Tag color="blue">
                                 {match.score_a}-{match.score_b}
                               </Tag>
-                            ) : null}
+                            ) : (
+                              <Tag>Pending</Tag>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -169,10 +191,10 @@ export function PublicQualifyingClient({
                   </div>
                 </Space>
               </Card>
-            </Col>
-          );
+            ),
+          };
         })}
-      </Row>
+      />
     </div>
   );
 }
