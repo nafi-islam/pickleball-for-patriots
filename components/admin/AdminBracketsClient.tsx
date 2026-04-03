@@ -14,11 +14,11 @@ import {
   Select,
   Space,
   Tag,
-  Tooltip,
   Typography,
   message,
 } from "antd";
-import { InfoCircleOutlined, TrophyOutlined } from "@ant-design/icons";
+import { TrophyOutlined } from "@ant-design/icons";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   generateBracket,
   resetBracket,
@@ -167,23 +167,12 @@ export function AdminBracketsClient({
   return (
     <div className="max-w-6xl mx-auto">
       {contextHolder}
-      <Space align="center">
-        <TrophyOutlined className="text-gray-500" />
-        <Typography.Title level={2} style={{ marginBottom: 0 }}>
-          Bracket Generation
-        </Typography.Title>
-        <Tooltip
-          placement="right"
-          title="Brackets use qualified teams when courts exist. Teams are seeded by registration order. Byes fill empty slots to reach a power of two."
-        >
-          <InfoCircleOutlined className="text-gray-500" />
-        </Tooltip>
-      </Space>
-      <Typography.Paragraph type="secondary">
-        Generate the tournament bracket once registration is finalized. This
-        creates all matches for the selected bracket and handles byes
-        automatically.
-      </Typography.Paragraph>
+      <AdminPageHeader
+        title="Bracket Generation"
+        subtitle="Generate the elimination bracket from qualified teams and publish it for players."
+        icon={<TrophyOutlined />}
+        tooltip="Brackets use qualified teams when courts exist. Teams are seeded by registration order. Byes fill empty slots to reach a power of two."
+      />
 
       {brackets.length === 0 ? (
         <Card style={{ borderRadius: 16 }}>

@@ -16,11 +16,11 @@ import {
   Space,
   Tabs,
   Tag,
-  Tooltip,
   Typography,
   message,
 } from "antd";
-import { InfoCircleOutlined, ScheduleOutlined } from "@ant-design/icons";
+import { ScheduleOutlined } from "@ant-design/icons";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import {
   autoAssignCourts,
   autoSelectQualifiers,
@@ -585,22 +585,12 @@ export function AdminQualifyingClient({
 }) {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Space align="center">
-        <ScheduleOutlined className="text-gray-500" />
-        <Typography.Title level={2} style={{ marginBottom: 0 }}>
-          Qualifying Courts
-        </Typography.Title>
-        <Tooltip
-          placement="right"
-          title="Assign teams to courts, record round robin scores, and select the top two teams per court to advance to the bracket."
-        >
-          <InfoCircleOutlined className="text-gray-500" />
-        </Tooltip>
-      </Space>
-      <Typography.Paragraph type="secondary">
-        Assign teams to courts, record round robin results, and confirm the top
-        two teams advancing to the bracket.
-      </Typography.Paragraph>
+      <AdminPageHeader
+        title="Qualifying Courts"
+        subtitle="Assign teams, record round robin results, and select the top two teams per court."
+        icon={<ScheduleOutlined />}
+        tooltip="Teams play a round robin within their court. Rankings use wins, then point differential, then points scored. The top two teams advance to the bracket."
+      />
       <Tabs
         items={[
           {
