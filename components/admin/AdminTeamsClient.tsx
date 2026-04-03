@@ -27,7 +27,7 @@ export function AdminTeamsClient({
   competitiveTeams,
 }: Props) {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       <AdminPageHeader
         title="Team Management"
         subtitle="Review registrations and withdraw teams when needed."

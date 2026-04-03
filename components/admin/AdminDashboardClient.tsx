@@ -60,18 +60,20 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
         : "Needs teams";
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mt-3">
-        <AdminPageHeader
-          title="Admin Dashboard"
-          subtitle="Overview of registration health and tournament readiness."
-          icon={<DashboardOutlined />}
-        />
-      </div>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <AdminPageHeader
+        title="Admin Dashboard"
+        subtitle="Overview of registration health and tournament readiness."
+        icon={<DashboardOutlined />}
+      />
 
-      <div className="mt-3">
-        <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-          <Space direction="vertical" size={8}>
+      <div className="space-y-4 py-4">
+        <Card
+          style={CARD_STYLE}
+          styles={{ body: CARD_BODY_STYLE }}
+          className="my-4"
+        >
+          <Space orientation="vertical" size={8}>
             <Typography.Title level={4} style={{ marginBottom: 0 }}>
               Tournament Overview
             </Typography.Title>
@@ -97,10 +99,7 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
             </Row>
           </Space>
         </Card>
-      </div>
-
-      <div className="mt-3">
-        <Row gutter={[16, 16]}>
+        <Row gutter={[16, 16]} className="mt-4">
           <Col xs={24} md={6}>
             <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
               <Typography.Text type="secondary">Total Teams</Typography.Text>
@@ -134,18 +133,19 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
             </Card>
           </Col>
         </Row>
-      </div>
-
-      <div className="mt-3">
-        <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-          <Space direction="vertical" size={12} className="w-full">
+        <Card
+          style={CARD_STYLE}
+          styles={{ body: CARD_BODY_STYLE }}
+          className="my-4"
+        >
+          <Space orientation="vertical" size={12} className="w-full">
             <Typography.Title level={4} style={{ marginBottom: 0 }}>
               Registration Health
             </Typography.Title>
             <Row gutter={[16, 16]}>
               <Col xs={24} md={12}>
                 <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-                  <Space direction="vertical" size={6}>
+                  <Space orientation="vertical" size={6}>
                     <Typography.Text strong>Recreational</Typography.Text>
                     <Typography.Text type="secondary">
                       {stats.recreationalTeams} / {stats.maxTeams} teams
@@ -165,7 +165,7 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
               </Col>
               <Col xs={24} md={12}>
                 <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-                  <Space direction="vertical" size={6}>
+                  <Space orientation="vertical" size={6}>
                     <Typography.Text strong>Competitive</Typography.Text>
                     <Typography.Text type="secondary">
                       {stats.competitiveTeams} / {stats.maxTeams} teams
@@ -186,42 +186,40 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
             </Row>
           </Space>
         </Card>
-      </div>
 
-      <div className="mt-3">
-        <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-          <Space direction="vertical" size={12} className="w-full">
-            <Typography.Title level={4} style={{ marginBottom: 0 }}>
-              Quick Actions
-            </Typography.Title>
-            <Space wrap>
-              <Link href="/admin/teams">
-                <Button type="primary">Manage Teams</Button>
-              </Link>
-              <Link href="/admin/qualifying">
-                <Button>Qualifying Courts</Button>
-              </Link>
-              <Link href="/admin/brackets">
-                <Button>Generate Brackets</Button>
-              </Link>
-              <Link href="/admin/scoring">
-                <Button>Enter Scores</Button>
-              </Link>
-              <Link href="/admin/overrides">
-                <Button>Admin Overrides</Button>
-              </Link>
+        <div className="my-4">
+          <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
+            <Space orientation="vertical" size={12} className="w-full">
+              <Typography.Title level={4} style={{ marginBottom: 0 }}>
+                Quick Actions
+              </Typography.Title>
+              <Space wrap>
+                <Link href="/admin/teams">
+                  <Button type="primary">Manage Teams</Button>
+                </Link>
+                <Link href="/admin/qualifying">
+                  <Button>Qualifying Courts</Button>
+                </Link>
+                <Link href="/admin/brackets">
+                  <Button>Generate Brackets</Button>
+                </Link>
+                <Link href="/admin/scoring">
+                  <Button>Enter Scores</Button>
+                </Link>
+                <Link href="/admin/overrides">
+                  <Button>Admin Overrides</Button>
+                </Link>
+              </Space>
             </Space>
-          </Space>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      <div className="mt-3">
         <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
-          <Space direction="vertical" size={10}>
+          <Space orientation="vertical" size={10}>
             <Typography.Title level={4} style={{ marginBottom: 0 }}>
               Operational Alerts
             </Typography.Title>
-            <Space direction="vertical" size={4}>
+            <Space orientation="vertical" size={4}>
               {recreationalStatus === "Ready" && (
                 <Typography.Text>
                   Recreational bracket is ready for generation.
@@ -253,7 +251,7 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
                   <Typography.Text type="secondary">
                     No operational alerts right now.
                   </Typography.Text>
-              )}
+                )}
             </Space>
           </Space>
         </Card>

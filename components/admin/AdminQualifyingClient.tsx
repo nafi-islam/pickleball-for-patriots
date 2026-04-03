@@ -133,7 +133,8 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     for (const list of map.values()) {
       list.sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
-        if (b.differential !== a.differential) return b.differential - a.differential;
+        if (b.differential !== a.differential)
+          return b.differential - a.differential;
         return b.points_for - a.points_for;
       });
     }
@@ -227,10 +228,15 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
 
   const handleOpenSeeding = (courtId: string) => {
     const courtAssignments = assignmentsByCourt.get(courtId) ?? [];
-    const sorted = [...courtAssignments].sort((a, b) => a.position - b.position);
+    const sorted = [...courtAssignments].sort(
+      (a, b) => a.position - b.position,
+    );
     setSeedSelections((prev) => ({
       ...prev,
-      [courtId]: Array.from({ length: 4 }, (_, idx) => sorted[idx]?.team?.id ?? null),
+      [courtId]: Array.from(
+        { length: 4 },
+        (_, idx) => sorted[idx]?.team?.id ?? null,
+      ),
     }));
     setEditingCourt(courtId);
   };
@@ -301,7 +307,11 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
           </Typography.Text>
           <Typography.Text type="secondary">
             Status:{" "}
-            <Tag color={bracket.qualifying_status === "PUBLISHED" ? "green" : "default"}>
+            <Tag
+              color={
+                bracket.qualifying_status === "PUBLISHED" ? "green" : "default"
+              }
+            >
               {bracket.qualifying_status ?? "DRAFT"}
             </Tag>
           </Typography.Text>
@@ -385,19 +395,28 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                     <div>
                       <Typography.Text strong>Standings</Typography.Text>
                       {courtStats.length === 0 ? (
-                        <Typography.Paragraph type="secondary" className="!mb-0">
+                        <Typography.Paragraph
+                          type="secondary"
+                          className="!mb-0"
+                        >
                           No standings yet.
                         </Typography.Paragraph>
                       ) : (
                         <ul className="mt-2 space-y-1">
                           {courtStats.map((stat) => {
                             const team = courtAssignments.find(
-                              (assignment) => assignment.team?.id === stat.team_id,
+                              (assignment) =>
+                                assignment.team?.id === stat.team_id,
                             )?.team;
                             return (
-                              <li key={stat.team_id} className="flex flex-wrap items-center gap-2">
+                              <li
+                                key={stat.team_id}
+                                className="flex flex-wrap items-center gap-2"
+                              >
                                 <span>{team?.name ?? "Team"}</span>
-                                <Tag>{stat.wins}-{stat.losses}</Tag>
+                                <Tag>
+                                  {stat.wins}-{stat.losses}
+                                </Tag>
                                 <Tag color="blue">Diff {stat.differential}</Tag>
                               </li>
                             );
@@ -409,7 +428,10 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                     <div>
                       <Typography.Text strong>Matches</Typography.Text>
                       {courtMatches.length === 0 ? (
-                        <Typography.Paragraph type="secondary" className="!mb-0">
+                        <Typography.Paragraph
+                          type="secondary"
+                          className="!mb-0"
+                        >
                           Matches not generated yet.
                         </Typography.Paragraph>
                       ) : (
@@ -500,7 +522,9 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                     </div>
 
                     <div>
-                      <Typography.Text strong>Manual Qualifiers</Typography.Text>
+                      <Typography.Text strong>
+                        Manual Qualifiers
+                      </Typography.Text>
                       <Space direction="vertical" className="w-full mt-2">
                         <Select
                           mode="multiple"
@@ -557,7 +581,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                     [editingCourt]: [
                       ...(prev[editingCourt] ?? [null, null, null, null]),
                     ].map((entry, index) =>
-                      index === idx ? value ?? null : entry ?? null,
+                      index === idx ? (value ?? null) : (entry ?? null),
                     ),
                   }))
                 }
@@ -565,7 +589,10 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
             ))}
             <Space wrap>
               <Button onClick={() => setEditingCourt(null)}>Cancel</Button>
-              <Button type="primary" onClick={() => handleSaveSeeding(editingCourt)}>
+              <Button
+                type="primary"
+                onClick={() => handleSaveSeeding(editingCourt)}
+              >
                 Save Seeding
               </Button>
             </Space>
@@ -586,7 +613,7 @@ export function AdminQualifyingClient({
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <AdminPageHeader
-        title="Qualifying Courts"
+        title="Qualifying"
         subtitle="Assign teams, record round robin results, and select the top two teams per court."
         icon={<ScheduleOutlined />}
         tooltip="Teams play a round robin within their court. Rankings use wins, then point differential, then points scored. The top two teams advance to the bracket."

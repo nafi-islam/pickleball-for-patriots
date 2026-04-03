@@ -2,7 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Card, Empty, Select, Space, Tabs, Tag, Typography, message } from "antd";
+import {
+  Card,
+  Empty,
+  Select,
+  Space,
+  Tabs,
+  Tag,
+  Typography,
+  message,
+} from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import ScoreForm from "@/components/admin/ScoreForm";
@@ -69,7 +78,9 @@ function BracketScoringSection({ matches }: { matches: MatchRow[] }) {
                 placeholder="Assign court"
                 allowClear
                 value={
-                  match.court ? Number(match.court.replace("Court ", "")) : undefined
+                  match.court
+                    ? Number(match.court.replace("Court ", ""))
+                    : undefined
                 }
                 options={courtOptions}
                 disabled={isPending}
@@ -126,7 +137,7 @@ export function AdminScoringClient({
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <AdminPageHeader
-        title="Scoring & Advancement"
+        title="Scoring"
         subtitle="Record match results and automatically advance winners."
         icon={<CheckCircleOutlined />}
       />

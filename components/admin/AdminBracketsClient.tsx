@@ -5,14 +5,13 @@ import { useMemo, useState, useTransition } from "react";
 import {
   Button,
   Card,
-  Col,
   Divider,
   Drawer,
   Empty,
   Modal,
-  Row,
   Select,
   Space,
+  Tabs,
   Tag,
   Typography,
   message,
@@ -97,7 +96,9 @@ export function AdminBracketsClient({
         router.refresh();
       } catch (error) {
         messageApi.error(
-          error instanceof Error ? error.message : "Failed to unpublish bracket.",
+          error instanceof Error
+            ? error.message
+            : "Failed to unpublish bracket.",
         );
       }
     });
@@ -118,7 +119,9 @@ export function AdminBracketsClient({
             router.refresh();
           } catch (error) {
             messageApi.error(
-              error instanceof Error ? error.message : "Failed to reset bracket.",
+              error instanceof Error
+                ? error.message
+                : "Failed to reset bracket.",
             );
           }
         }),
@@ -127,7 +130,10 @@ export function AdminBracketsClient({
 
   const openSeeding = (bracket: BracketSummary) => {
     setActiveBracket(bracket);
-    const initial: Record<string, { teamAId: string | null; teamBId: string | null }> = {};
+    const initial: Record<
+      string,
+      { teamAId: string | null; teamBId: string | null }
+    > = {};
     for (const match of bracket.roundOneMatches) {
       initial[match.id] = {
         teamAId: match.team_a_id ?? null,
@@ -165,10 +171,10 @@ export function AdminBracketsClient({
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       {contextHolder}
       <AdminPageHeader
-        title="Bracket Generation"
+        title="Brackets"
         subtitle="Generate the elimination bracket from qualified teams and publish it for players."
         icon={<TrophyOutlined />}
         tooltip="Brackets use qualified teams when courts exist. Teams are seeded by registration order. Byes fill empty slots to reach a power of two."
@@ -179,8 +185,8 @@ export function AdminBracketsClient({
           <Empty description="No brackets found. Seed the recreational and competitive brackets first." />
         </Card>
       ) : (
-        <Row gutter={[16, 16]}>
-          {brackets.map((bracket) => {
+        <Tabs
+          items={brackets.map((bracket) => {
             const needsQualified =
               bracket.courtCount > 0 && bracket.qualifiedTeamCount < 2;
 
@@ -195,8 +201,13 @@ export function AdminBracketsClient({
               bracket.matchCount > 0 && bracket.status !== "PUBLISHED";
             const canUnpublish = bracket.status === "PUBLISHED";
 
-            return (
-              <Col xs={24} md={12} key={bracket.id}>
+            return {
+              key: bracket.id,
+              label:
+                bracket.type === "recreational"
+                  ? "Recreational"
+                  : "Competitive",
+              children: (
                 <Card style={{ borderRadius: 16 }}>
                   <Space direction="vertical" size={12} className="w-full">
                     <div className="flex items-center justify-between">
@@ -206,7 +217,9 @@ export function AdminBracketsClient({
                           : "Competitive"}
                       </Typography.Title>
                       <Tag
-                        color={bracket.status === "GENERATED" ? "green" : "blue"}
+                        color={
+                          bracket.status === "GENERATED" ? "green" : "blue"
+                        }
                       >
                         {bracket.status}
                       </Tag>
@@ -266,10 +279,10 @@ export function AdminBracketsClient({
                     </Space>
                   </Space>
                 </Card>
-              </Col>
-            );
+              ),
+            };
           })}
-        </Row>
+        />
       )}
 
       <Drawer
