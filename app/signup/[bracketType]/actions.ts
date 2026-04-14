@@ -1,6 +1,7 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
+import { fetchTicketPayments } from "@/lib/stripe";
 
 type BracketType = "recreational" | "competitive";
 
@@ -66,6 +67,19 @@ export async function registerTeam(
     if (!isValidEmail(email)) {
       throw new Error("Please provide valid email addresses.");
     }
+  }
+
+  // verify both players have purchased tickets
+  const tickets = await fetchTicketPayments();
+  const paidEmails = new Set(tickets.map((t) => t.email));
+  const playerEmails = [normalized.player1Email, normalized.player2Email];
+  const unpaid = playerEmails.filter((email) => !paidEmails.has(email));
+
+  if (unpaid.length > 0) {
+    const ticketUrl = process.env.PARTICIPANT_TICKET_URL ?? "";
+    throw new Error(
+      `No completed payment found for: ${unpaid.join(", ")}. Each player must purchase a ticket (with your email) before registering. Buy a ticket here: ${ticketUrl}`,
+    );
   }
 
   // Fetch the bracket

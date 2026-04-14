@@ -19,7 +19,12 @@ type TeamRow = {
   players: PlayerRow[];
 };
 
-export function TeamsTable({ teams }: { teams: TeamRow[] }) {
+type Props = {
+  teams: TeamRow[];
+  paidEmails?: Set<string>;
+};
+
+export function TeamsTable({ teams, paidEmails }: Props) {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -41,7 +46,14 @@ export function TeamsTable({ teams }: { teams: TeamRow[] }) {
         <Space orientation="vertical" size={0}>
           {record.players.map((player) => (
             <span key={player.email}>
-              {player.name} ({player.email})
+              {player.name} ({player.email}){" "}
+              {paidEmails && (
+                paidEmails.has(player.email.toLowerCase()) ? (
+                  <Tag color="green">Paid</Tag>
+                ) : (
+                  <Tag color="red">Unpaid</Tag>
+                )
+              )}
             </span>
           ))}
         </Space>
@@ -115,7 +127,14 @@ export function TeamsTable({ teams }: { teams: TeamRow[] }) {
                     <Space orientation="vertical" size={0}>
                       {record.players.map((player) => (
                         <span key={player.email}>
-                          {player.name} ({player.email})
+                          {player.name} ({player.email}){" "}
+                          {paidEmails && (
+                            paidEmails.has(player.email.toLowerCase()) ? (
+                              <Tag color="green">Paid</Tag>
+                            ) : (
+                              <Tag color="red">Unpaid</Tag>
+                            )
+                          )}
                         </span>
                       ))}
                     </Space>
