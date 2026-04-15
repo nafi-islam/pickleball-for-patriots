@@ -5,8 +5,8 @@ import Image from "next/image";
 
 const images = [
   "/assets/pickleball-dakota.jpg",
-  "/assets/pickleball-2.jpg",
-  "/assets/pickleball-3.jpg",
+  "/assets/cool-dudes.png",
+  "/assets/pickleball-dakota-2.jpg",
 ];
 
 export default function ImageCarousel() {
