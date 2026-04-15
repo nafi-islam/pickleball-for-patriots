@@ -39,6 +39,23 @@ const REQUIRED_TEXT = "This field is required.";
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
 
 function renderErrorMessage(message: string) {
+  const ticketLinkMatch = message.match(
+    /^(.*Buy a ticket )here:\s*(https?:\/\/[^\s]+)\s*$/i,
+  );
+
+  if (ticketLinkMatch) {
+    const [, prefix, url] = ticketLinkMatch;
+
+    return (
+      <>
+        {prefix}
+        <a href={url} target="_blank" rel="noreferrer">
+          here!
+        </a>
+      </>
+    );
+  }
+
   const parts = message.split(URL_PATTERN);
 
   return parts.map((part, index) => {
