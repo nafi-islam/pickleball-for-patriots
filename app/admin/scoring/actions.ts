@@ -19,7 +19,8 @@ export async function reportMatchResult({
   matchId,
   scoreA,
   scoreB,
-}: ReportScoreInput) {
+}: ReportScoreInput): Promise<{ success: true } | { error: string }> {
+  try {
   // 1. Require admin access
   await requireAdmin();
 
@@ -113,9 +114,13 @@ export async function reportMatchResult({
 
   // 10. Success
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function setMatchCourt({ matchId, court }: SetCourtInput) {
+export async function setMatchCourt({ matchId, court }: SetCourtInput): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   if (court !== null && (!Number.isInteger(court) || court < 1 || court > 8)) {
@@ -135,4 +140,7 @@ export async function setMatchCourt({ matchId, court }: SetCourtInput) {
   }
 
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }

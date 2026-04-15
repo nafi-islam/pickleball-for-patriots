@@ -15,7 +15,10 @@ type BracketType = "recreational" | "competitive";
 const MAX_TEAMS_PER_BRACKET = 32;
 type BracketStatus = "DRAFT" | "GENERATED" | "PUBLISHED";
 
-export async function generateBracket(bracketType: BracketType) {
+export async function generateBracket(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate: bracket generation is an ops-only action.
   await requireAdmin();
 
@@ -240,12 +243,16 @@ export async function generateBracket(bracketType: BracketType) {
   revalidatePath("/admin/brackets");
   revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
 export async function setBracketStatus(
   bracketType: BracketType,
   status: BracketStatus,
-) {
+): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   const { data: bracket, error: bracketError } = await supabase
@@ -270,9 +277,15 @@ export async function setBracketStatus(
   revalidatePath("/admin/brackets");
   revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function resetBracket(bracketType: BracketType) {
+export async function resetBracket(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   const { data: bracket, error: bracketError } = await supabase
@@ -306,13 +319,17 @@ export async function resetBracket(bracketType: BracketType) {
   revalidatePath("/admin/brackets");
   revalidatePath(`/bracket/${bracketType}`);
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
 export async function updateMatchParticipants(
   matchId: string,
   teamAId: string | null,
   teamBId: string | null,
-) {
+): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   if (!teamAId && !teamBId) {
@@ -417,4 +434,7 @@ export async function updateMatchParticipants(
   }
 
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }

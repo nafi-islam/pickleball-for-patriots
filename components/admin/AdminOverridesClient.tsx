@@ -74,16 +74,12 @@ function CompletedMatchesList({ matches }: { matches: MatchRow[] }) {
                 loading={isPending}
                 onClick={() =>
                   startTransition(async () => {
-                    try {
-                      await undoMatchResult(match.id);
+                    const result = await undoMatchResult(match.id);
+                    if ("error" in result) {
+                      messageApi.error(result.error);
+                    } else {
                       messageApi.success("Match result undone.");
                       router.refresh();
-                    } catch (error) {
-                      messageApi.error(
-                        error instanceof Error
-                          ? error.message
-                          : "Failed to undo result.",
-                      );
                     }
                   })
                 }

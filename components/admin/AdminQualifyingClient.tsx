@@ -146,83 +146,86 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     scoreA: number,
     scoreB: number,
   ) => {
+    if (Number.isNaN(scoreA) || Number.isNaN(scoreB)) {
+      toast.error("Enter scores for both teams.");
+      return;
+    }
     setSavingMatchId(matchId);
     try {
-      if (Number.isNaN(scoreA) || Number.isNaN(scoreB)) {
-        throw new Error("Enter scores for both teams.");
+      const result = await reportQualifyingScore(matchId, scoreA, scoreB);
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        toast.success("Qualifying score saved.");
+        router.refresh();
       }
-      await reportQualifyingScore(matchId, scoreA, scoreB);
-      toast.success("Qualifying score saved.");
-      router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     } finally {
       setSavingMatchId(null);
     }
   };
 
   const handleAutoAssign = async () => {
-    try {
-      await autoAssignCourts(bracket.type);
+    const result = await autoAssignCourts(bracket.type);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success("Courts assigned.");
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
   const handleGenerate = async () => {
-    try {
-      await generateQualifyingMatches(bracket.type);
+    const result = await generateQualifyingMatches(bracket.type);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success("Qualifying matches generated.");
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
   const handleAutoQualify = async () => {
-    try {
-      await autoSelectQualifiers(bracket.type);
+    const result = await autoSelectQualifiers(bracket.type);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success("Top two teams selected for each court.");
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
   const handleReset = async () => {
-    try {
-      await resetQualifying(bracket.type);
+    const result = await resetQualifying(bracket.type);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success("Qualifying stage reset.");
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
   const handleSaveQualifiers = async (courtId: string) => {
     const selection = qualifierSelections[courtId] ?? [];
-    try {
-      await setCourtQualifiers(courtId, selection);
+    const result = await setCourtQualifiers(courtId, selection);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success("Qualifiers updated.");
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
   const handlePublishToggle = async (status: "PUBLISHED" | "DRAFT") => {
-    try {
-      await setQualifyingStatus(bracket.type, status);
+    const result = await setQualifyingStatus(bracket.type, status);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
       toast.success(
         status === "PUBLISHED"
           ? "Qualifying published."
           : "Qualifying unpublished.",
       );
       router.refresh();
-    } catch (error) {
-      toast.error((error as Error).message);
     }
   };
 
@@ -261,13 +264,13 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
       });
 
     const onConfirm = async () => {
-      try {
-        await updateCourtAssignments(courtId, selection);
+      const result = await updateCourtAssignments(courtId, selection);
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
         toast.success("Court assignments updated.");
         router.refresh();
         setEditingCourt(null);
-      } catch (error) {
-        toast.error((error as Error).message);
       }
     };
 

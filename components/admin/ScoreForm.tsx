@@ -20,20 +20,20 @@ export default function ScoreForm({
   const router = useRouter();
 
   const onFinish = async (values: { scoreA: number; scoreB: number }) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      await reportMatchResult({
+      const result = await reportMatchResult({
         matchId,
         scoreA: values.scoreA,
         scoreB: values.scoreB,
       });
-      messageApi.success("Score saved.");
-      form.resetFields();
-      router.refresh();
-    } catch (error) {
-      messageApi.error(
-        error instanceof Error ? error.message : "Failed to save score.",
-      );
+      if ("error" in result) {
+        messageApi.error(result.error);
+      } else {
+        messageApi.success("Score saved.");
+        form.resetFields();
+        router.refresh();
+      }
     } finally {
       setLoading(false);
     }

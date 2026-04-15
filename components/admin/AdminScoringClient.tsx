@@ -86,19 +86,15 @@ function BracketScoringSection({ matches }: { matches: MatchRow[] }) {
                 disabled={isPending}
                 onChange={(value) =>
                   startTransition(async () => {
-                    try {
-                      await setMatchCourt({
-                        matchId: match.id,
-                        court: value ?? null,
-                      });
+                    const result = await setMatchCourt({
+                      matchId: match.id,
+                      court: value ?? null,
+                    });
+                    if ("error" in result) {
+                      messageApi.error(result.error);
+                    } else {
                       messageApi.success("Court updated.");
                       router.refresh();
-                    } catch (error) {
-                      messageApi.error(
-                        error instanceof Error
-                          ? error.message
-                          : "Failed to update court.",
-                      );
                     }
                   })
                 }

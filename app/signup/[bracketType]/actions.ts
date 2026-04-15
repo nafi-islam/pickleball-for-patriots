@@ -35,7 +35,8 @@ function normalizeInput(formData: RegisterTeamInput): RegisterTeamInput {
 export async function registerTeam(
   bracketType: BracketType,
   formData: RegisterTeamInput,
-) {
+): Promise<{ success: true; teamId: string } | { error: string }> {
+  try {
   // Validate bracket type
   if (!["recreational", "competitive"].includes(bracketType)) {
     throw new Error("Invalid bracket type.");
@@ -182,4 +183,7 @@ export async function registerTeam(
 
   // Success
   return { success: true, teamId: team.id };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }

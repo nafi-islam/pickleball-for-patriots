@@ -77,17 +77,15 @@ export function TeamsTable({ teams, paidEmails }: Props) {
             size="small"
             loading={loadingId === record.id}
             onClick={async () => {
+              setLoadingId(record.id);
               try {
-                setLoadingId(record.id);
-                await withdrawTeam(record.id);
-                messageApi.success("Team withdrawn.");
-                router.refresh();
-              } catch (error) {
-                messageApi.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to withdraw team.",
-                );
+                const result = await withdrawTeam(record.id);
+                if ("error" in result) {
+                  messageApi.error(result.error);
+                } else {
+                  messageApi.success("Team withdrawn.");
+                  router.refresh();
+                }
               } finally {
                 setLoadingId(null);
               }

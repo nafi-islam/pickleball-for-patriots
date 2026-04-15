@@ -181,7 +181,8 @@ async function clearDownstreamBranch(match: MatchRow) {
 /**
  * 4. Undo a completed match result and clear any invalid downstream state.
  */
-export async function undoMatchResult(matchId: string) {
+export async function undoMatchResult(matchId: string): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   const { data: match, error: matchError } = await supabase
@@ -221,4 +222,7 @@ export async function undoMatchResult(matchId: string) {
   revalidatePath("/bracket/competitive");
 
   return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }

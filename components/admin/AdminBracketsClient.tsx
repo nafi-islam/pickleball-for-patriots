@@ -60,46 +60,36 @@ export function AdminBracketsClient({
 
   const handleGenerate = (type: BracketSummary["type"]) => {
     startTransition(async () => {
-      try {
-        await generateBracket(type);
+      const result = await generateBracket(type);
+      if ("error" in result) {
+        messageApi.error(result.error);
+      } else {
         messageApi.success("Bracket generated.");
         router.refresh();
-      } catch (error) {
-        messageApi.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to generate bracket.",
-        );
       }
     });
   };
 
   const handlePublish = (type: BracketSummary["type"]) => {
     startTransition(async () => {
-      try {
-        await setBracketStatus(type, "PUBLISHED");
+      const result = await setBracketStatus(type, "PUBLISHED");
+      if ("error" in result) {
+        messageApi.error(result.error);
+      } else {
         messageApi.success("Bracket published.");
         router.refresh();
-      } catch (error) {
-        messageApi.error(
-          error instanceof Error ? error.message : "Failed to publish bracket.",
-        );
       }
     });
   };
 
   const handleUnpublish = (type: BracketSummary["type"]) => {
     startTransition(async () => {
-      try {
-        await setBracketStatus(type, "GENERATED");
+      const result = await setBracketStatus(type, "GENERATED");
+      if ("error" in result) {
+        messageApi.error(result.error);
+      } else {
         messageApi.success("Bracket unpublished.");
         router.refresh();
-      } catch (error) {
-        messageApi.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to unpublish bracket.",
-        );
       }
     });
   };
@@ -113,16 +103,12 @@ export function AdminBracketsClient({
       okButtonProps: { danger: true },
       onOk: () =>
         startTransition(async () => {
-          try {
-            await resetBracket(type);
+          const result = await resetBracket(type);
+          if ("error" in result) {
+            messageApi.error(result.error);
+          } else {
             messageApi.success("Bracket reset.");
             router.refresh();
-          } catch (error) {
-            messageApi.error(
-              error instanceof Error
-                ? error.message
-                : "Failed to reset bracket.",
-            );
           }
         }),
     });
@@ -158,14 +144,12 @@ export function AdminBracketsClient({
     teamBId: string | null,
   ) => {
     startTransition(async () => {
-      try {
-        await updateMatchParticipants(matchId, teamAId, teamBId);
+      const result = await updateMatchParticipants(matchId, teamAId, teamBId);
+      if ("error" in result) {
+        messageApi.error(result.error);
+      } else {
         messageApi.success("Match updated.");
         router.refresh();
-      } catch (error) {
-        messageApi.error(
-          error instanceof Error ? error.message : "Failed to update match.",
-        );
       }
     });
   };
