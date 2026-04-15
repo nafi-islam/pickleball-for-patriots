@@ -185,6 +185,9 @@ export function HomePageClient({ bracketAvailability }: Props) {
                   <Typography.Text type="secondary" className="block">
                     Event Date: April 18, 2026
                   </Typography.Text>
+                  <Typography.Text type="secondary" className="block">
+                    Location: Omar Smith Tennis Courts, College Station, TX
+                  </Typography.Text>
 
                   {/* <Card
                     style={{ borderRadius: 20 }}
@@ -263,7 +266,7 @@ export function HomePageClient({ bracketAvailability }: Props) {
               rel="noreferrer"
               className="signature-link"
             >
-              josh &apos;25
+              josh &apos;25 🐺
             </a>
           </Typography.Text>
         </div>

@@ -18,8 +18,11 @@ const items = [
     label: "How are brackets structured?",
     children: (
       <p>
-        Each team is grouped by bracket and advances through round-based,
-        single-elimination match play. The final timing is shared after
+        First, teams are placed into qualifying courts and play a round robin
+        against the other teams in their court. The top teams from each court
+        advance to the main bracket. After that, the tournament becomes a
+        single-elimination bracket, so each match determines who moves on and
+        who is out. Final court assignments and timing are shared after
         registration closes.
       </p>
     ),
