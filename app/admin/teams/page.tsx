@@ -16,6 +16,16 @@ type TeamRow = {
 };
 
 async function fetchTeams(bracketType: "recreational" | "competitive") {
+  const { data: bracket, error: bracketError } = await supabase
+    .from("brackets")
+    .select("id")
+    .eq("type", bracketType)
+    .single();
+
+  if (bracketError || !bracket) {
+    return [];
+  }
+
   const { data } = await supabase
     .from("teams")
     .select(
@@ -24,11 +34,10 @@ async function fetchTeams(bracketType: "recreational" | "competitive") {
       name,
       contact_email,
       is_active,
-      brackets(type),
       players(name, email)
     `,
     )
-    .eq("brackets.type", bracketType)
+    .eq("bracket_id", bracket.id)
     .order("created_at", { ascending: true });
 
   return data ?? [];
