@@ -68,14 +68,16 @@ export default function SignupPage() {
       : "Competitive Bracket";
 
   const onFinish = async (values: SignupFormValues) => {
+    setError(null);
+    setLoading(true);
     try {
-      setError(null);
-      setLoading(true);
-      await registerTeam(bracketType as BracketType, values);
-      setSuccess(true);
-      form.resetFields();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const result = await registerTeam(bracketType as BracketType, values);
+      if ("error" in result) {
+        setError(result.error);
+      } else {
+        setSuccess(true);
+        form.resetFields();
+      }
     } finally {
       setLoading(false);
     }

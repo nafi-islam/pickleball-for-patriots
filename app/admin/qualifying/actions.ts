@@ -22,7 +22,10 @@ async function getBracketByType(type: BracketType) {
   return bracket;
 }
 
-export async function autoAssignCourts(bracketType: BracketType) {
+export async function autoAssignCourts(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -115,12 +118,17 @@ export async function autoAssignCourts(bracketType: BracketType) {
   // 10) Revalidate.
   revalidatePath("/admin/qualifying");
   revalidatePath("/admin/brackets");
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
 export async function setQualifyingStatus(
   bracketType: BracketType,
   status: QualifyingStatus,
-) {
+): Promise<{ success: true } | { error: string }> {
+  try {
   await requireAdmin();
 
   const bracket = await getBracketByType(bracketType);
@@ -136,9 +144,16 @@ export async function setQualifyingStatus(
 
   revalidatePath("/admin/qualifying");
   revalidatePath(`/qualifying/${bracketType}`);
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function generateQualifyingMatches(bracketType: BracketType) {
+export async function generateQualifyingMatches(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -226,6 +241,10 @@ export async function generateQualifyingMatches(bracketType: BracketType) {
   // 7) Revalidate.
   revalidatePath("/admin/qualifying");
   revalidatePath(`/qualifying/${bracketType}`);
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
 async function recomputeCourtStats(courtId: string) {
@@ -331,7 +350,8 @@ export async function reportQualifyingScore(
   matchId: string,
   scoreA: number,
   scoreB: number,
-) {
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -384,9 +404,16 @@ export async function reportQualifyingScore(
   revalidatePath("/admin/brackets");
   revalidatePath("/qualifying/recreational");
   revalidatePath("/qualifying/competitive");
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function autoSelectQualifiers(bracketType: BracketType) {
+export async function autoSelectQualifiers(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -450,9 +477,17 @@ export async function autoSelectQualifiers(bracketType: BracketType) {
   // 4) Revalidate.
   revalidatePath("/admin/qualifying");
   revalidatePath("/admin/brackets");
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function setCourtQualifiers(courtId: string, teamIds: string[]) {
+export async function setCourtQualifiers(
+  courtId: string,
+  teamIds: string[],
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -495,12 +530,17 @@ export async function setCourtQualifiers(courtId: string, teamIds: string[]) {
 
   // 5) Revalidate.
   revalidatePath("/admin/qualifying");
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
 export async function updateCourtAssignments(
   courtId: string,
   teamIds: Array<string | null>,
-) {
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -687,9 +727,16 @@ export async function updateCourtAssignments(
   if (bracket?.type) {
     revalidatePath(`/qualifying/${bracket.type}`);
   }
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
 
-export async function resetQualifying(bracketType: BracketType) {
+export async function resetQualifying(
+  bracketType: BracketType,
+): Promise<{ success: true } | { error: string }> {
+  try {
   // 1) Admin gate.
   await requireAdmin();
 
@@ -734,4 +781,8 @@ export async function resetQualifying(bracketType: BracketType) {
 
   // 5) Revalidate.
   revalidatePath("/admin/qualifying");
+  return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Something went wrong." };
+  }
 }
