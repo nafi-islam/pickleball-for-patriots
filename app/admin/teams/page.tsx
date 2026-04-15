@@ -1,6 +1,7 @@
 import { AdminTeamsClient } from "@/components/admin/AdminTeamsClient";
 import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { fetchTicketPayments } from "@/lib/stripe";
 
 type TeamRow = {
   id: string;
@@ -36,13 +37,19 @@ async function fetchTeams(bracketType: "recreational" | "competitive") {
 export default async function AdminTeamsPage() {
   await requireAdmin();
 
-  const recreationalTeams = await fetchTeams("recreational");
-  const competitiveTeams = await fetchTeams("competitive");
+  const [recreationalTeams, competitiveTeams, paidTickets] = await Promise.all([
+    fetchTeams("recreational"),
+    fetchTeams("competitive"),
+    fetchTicketPayments(),
+  ]);
+
+  const paidEmails = paidTickets.map((t) => t.email);
 
   return (
     <AdminTeamsClient
       recreationalTeams={recreationalTeams as unknown as TeamRow[]}
       competitiveTeams={competitiveTeams as unknown as TeamRow[]}
+      paidEmails={paidEmails}
     />
   );
 }
