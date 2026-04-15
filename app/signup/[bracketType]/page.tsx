@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -36,6 +36,30 @@ type SignupFormValues = {
 };
 
 const REQUIRED_TEXT = "This field is required.";
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+function renderErrorMessage(message: string) {
+  const parts = message.split(URL_PATTERN);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    if (part.startsWith("http://") || part.startsWith("https://")) {
+      return (
+        <a
+          key={`${part}-${index}`}
+          href={part}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {part}
+        </a>
+      );
+    }
+
+    return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
+  });
+}
 
 export default function SignupPage() {
   const params = useParams<{ bracketType: string }>();
@@ -44,6 +68,10 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const errorMessage = useMemo(
+    () => (error ? renderErrorMessage(error) : null),
+    [error],
+  );
 
   if (bracketType !== "recreational" && bracketType !== "competitive") {
     return (
@@ -143,7 +171,7 @@ export default function SignupPage() {
         {error && (
           <Alert
             type="error"
-            message={error}
+            message={errorMessage}
             showIcon
             style={{ marginBottom: 16 }}
           />
