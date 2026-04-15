@@ -126,6 +126,30 @@ export async function registerTeam(
     );
   }
 
+  // Prevent the same player email from registering on multiple teams.
+  const { data: existingPlayers, error: existingPlayersError } = await supabase
+    .from("players")
+    .select("email")
+    .in("email", playerEmails);
+
+  if (existingPlayersError) {
+    throw new Error("Could not validate player eligibility.");
+  }
+
+  const duplicatePlayerEmails = Array.from(
+    new Set(
+      (existingPlayers ?? [])
+        .map((player) => player.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email)),
+    ),
+  );
+
+  if (duplicatePlayerEmails.length > 0) {
+    throw new Error(
+      `These player emails are already registered: ${duplicatePlayerEmails.join(", ")}.`,
+    );
+  }
+
   // Create the team
   const { data: team, error: teamError } = await supabase
     .from("teams")

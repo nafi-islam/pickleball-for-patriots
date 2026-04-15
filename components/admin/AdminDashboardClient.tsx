@@ -84,7 +84,7 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
               </Col>
               <Col xs={24} md={6}>
                 <Typography.Text type="secondary">Location</Typography.Text>
-                <div>{tournament?.location ?? "TBD"}</div>
+                <div>{tournament?.location ?? "Omar Smith Tennis Courts"}</div>
               </Col>
               <Col xs={24} md={6}>
                 <Typography.Text type="secondary">Event Date</Typography.Text>
