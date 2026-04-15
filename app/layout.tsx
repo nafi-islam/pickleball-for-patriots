@@ -1,6 +1,7 @@
 import { type Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { Analytics } from "@vercel/analytics/react";
 import "antd/dist/reset.css";
 import "./globals.css";
 
@@ -18,7 +19,10 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AntdRegistry>
-          <ClerkProvider>{children}</ClerkProvider>
+          <ClerkProvider>
+            {children}
+            <Analytics />
+          </ClerkProvider>
         </AntdRegistry>
       </body>
     </html>
