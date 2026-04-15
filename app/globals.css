@@ -32,3 +32,62 @@ body {
 .countdown > span::before {
   content: attr(data-value);
 }
+
+.signature-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    rgba(248, 250, 252, 0.75)
+  );
+}
+
+.signature-text {
+  display: block;
+  width: 100%;
+  text-align: center;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-size: 0.92rem;
+  color: #475569;
+}
+
+.signature-link {
+  position: relative;
+  display: inline-block;
+  color: #020617;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    color 180ms ease,
+    transform 180ms ease,
+    text-shadow 180ms ease;
+}
+
+.signature-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.24rem;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #0f172a, #22c55e);
+  transform: scaleX(0.45);
+  transform-origin: center;
+  transition: transform 180ms ease;
+}
+
+.signature-link:hover {
+  color: #075985;
+  text-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
+  transform: translateY(-1px);
+}
+
+.signature-link:hover::after {
+  transform: scaleX(1);
+}

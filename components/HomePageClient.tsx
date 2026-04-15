@@ -243,6 +243,31 @@ export function HomePageClient({ bracketAvailability }: Props) {
       </div>
 
       <ContactSection />
+
+      <footer className="px-4 pb-10 pt-4 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <Typography.Text className="signature-text text-center">
+            made by{" "}
+            <a
+              href="https://www.nafiislam.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="signature-link"
+            >
+              nafi &apos;25
+            </a>{" "}
+            and{" "}
+            <a
+              href="http://joshuamayhugh.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="signature-link"
+            >
+              josh &apos;25
+            </a>
+          </Typography.Text>
+        </div>
+      </footer>
     </main>
   );
 }
