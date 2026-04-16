@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge, Button, Card, Col, Row, Space, Tag, Typography } from "antd";
 import { DashboardOutlined } from "@ant-design/icons";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { PaidTicketsTable } from "@/components/admin/PaidTicketsTable";
 
 type Stats = {
   totalTeams: number;
@@ -23,9 +24,19 @@ type TournamentOverview = {
   updated_at?: string | null;
 };
 
+type TicketPayment = {
+  email: string;
+  name: string | null;
+  amountPaid: number;
+  currency: string;
+  paidAt: number;
+  sessionId: string;
+};
+
 type Props = {
   stats: Stats;
   tournament: TournamentOverview | null;
+  ticketPayments: TicketPayment[];
 };
 
 const DEFAULT_EVENT_DATE = "2026-04-18";
@@ -44,7 +55,7 @@ function formatDate(dateString?: string | null) {
   });
 }
 
-export function AdminDashboardClient({ stats, tournament }: Props) {
+export function AdminDashboardClient({ stats, tournament, ticketPayments }: Props) {
   const recreationalStatus =
     stats.recreationalTeams >= stats.maxTeams
       ? "Full"
@@ -213,6 +224,8 @@ export function AdminDashboardClient({ stats, tournament }: Props) {
             </Space>
           </Card>
         </div>
+
+        <PaidTicketsTable payments={ticketPayments} />
 
         <Card style={CARD_STYLE} styles={{ body: CARD_BODY_STYLE }}>
           <Space orientation="vertical" size={10}>
