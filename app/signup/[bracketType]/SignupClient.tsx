@@ -199,8 +199,8 @@ export function SignupClient({ bracketType, ticketUrl }: Props) {
                   "purchase a ticket"
                 )}{" "}
                 before registering. The email used at checkout must match the
-                player email entered below, and each player must use a different
-                email.
+                player email below. One person may purchase tickets for both
+                players, in that case, use that email for both players.
               </>
             }
           />

@@ -53,10 +53,6 @@ export async function registerTeam(
     throw new Error("Both player names are required.");
   }
 
-  if (normalized.player1Email === normalized.player2Email) {
-    throw new Error("Player emails must be different.");
-  }
-
   // Validate email formats
   const emails = [
     normalized.contactEmail,
@@ -70,16 +66,56 @@ export async function registerTeam(
     }
   }
 
-  // verify both players have purchased tickets
+  // Ticket-balance check: for each email associated with this team, compute
+  // (tickets purchased) − (players already on active teams). The total
+  // available across all team emails must be >= 2. This prevents ticket
+  // "theft" while allowing one buyer to cover both players.
   const tickets = await fetchTicketPayments();
-  const paidEmails = new Set(tickets.map((t) => t.email));
-  const playerEmails = [normalized.player1Email, normalized.player2Email];
-  const unpaid = playerEmails.filter((email) => !paidEmails.has(email));
+  const teamEmailList = [
+    normalized.player1Email,
+    normalized.player2Email,
+    normalized.contactEmail,
+  ];
+  const uniqueTeamEmails = [...new Set(teamEmailList)];
 
-  if (unpaid.length > 0) {
+  // Count tickets purchased per email
+  const ticketsByEmail = new Map<string, number>();
+  for (const t of tickets) {
+    if (uniqueTeamEmails.includes(t.email)) {
+      ticketsByEmail.set(t.email, (ticketsByEmail.get(t.email) ?? 0) + 1);
+    }
+  }
+
+  // Count players already registered on active teams per email
+  const { data: activePlayers, error: activePlayersError } = await supabase
+    .from("players")
+    .select("email, teams!inner(is_active)")
+    .in("email", uniqueTeamEmails)
+    .eq("teams.is_active", true);
+
+  if (activePlayersError) {
+    throw new Error("Could not verify ticket eligibility.");
+  }
+
+  const usedByEmail = new Map<string, number>();
+  for (const p of activePlayers ?? []) {
+    const email = p.email?.trim().toLowerCase();
+    if (email) {
+      usedByEmail.set(email, (usedByEmail.get(email) ?? 0) + 1);
+    }
+  }
+
+  let availableTickets = 0;
+  for (const email of uniqueTeamEmails) {
+    const purchased = ticketsByEmail.get(email) ?? 0;
+    const used = usedByEmail.get(email) ?? 0;
+    availableTickets += Math.max(0, purchased - used);
+  }
+
+  if (availableTickets < 2) {
     const ticketUrl = process.env.PARTICIPANT_TICKET_URL ?? "";
     throw new Error(
-      `No completed payment found for: ${unpaid.join(", ")}. Each player must purchase a ticket (with your email) before registering. Buy a ticket here: ${ticketUrl}`,
+      `Not enough available tickets for this team (${availableTickets} available, 2 required). Each ticket can only be used once. Buy tickets here: ${ticketUrl}`,
     );
   }
 
@@ -124,30 +160,6 @@ export async function registerTeam(
   if ((existingTeams ?? 0) > 0) {
     throw new Error(
       "This email has already registered a team for this bracket.",
-    );
-  }
-
-  // Prevent the same player email from registering on multiple teams.
-  const { data: existingPlayers, error: existingPlayersError } = await supabase
-    .from("players")
-    .select("email")
-    .in("email", playerEmails);
-
-  if (existingPlayersError) {
-    throw new Error("Could not validate player eligibility.");
-  }
-
-  const duplicatePlayerEmails = Array.from(
-    new Set(
-      (existingPlayers ?? [])
-        .map((player) => player.email?.trim().toLowerCase())
-        .filter((email): email is string => Boolean(email)),
-    ),
-  );
-
-  if (duplicatePlayerEmails.length > 0) {
-    throw new Error(
-      `These player emails are already registered: ${duplicatePlayerEmails.join(", ")}.`,
     );
   }
 

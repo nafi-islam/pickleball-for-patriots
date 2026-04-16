@@ -44,8 +44,8 @@ export function TeamsTable({ teams, paidEmails }: Props) {
       responsive: ["md"],
       render: (_, record) => (
         <Space orientation="vertical" size={0}>
-          {record.players.map((player) => (
-            <span key={player.email}>
+          {record.players.map((player, idx) => (
+            <span key={`${idx}-${player.email}`}>
               {player.name} ({player.email}){" "}
               {paidEmails && (
                 paidEmails.has(player.email.toLowerCase()) ? (
@@ -123,8 +123,8 @@ export function TeamsTable({ teams, paidEmails }: Props) {
                   label: "Players",
                   children: (
                     <Space orientation="vertical" size={0}>
-                      {record.players.map((player) => (
-                        <span key={player.email}>
+                      {record.players.map((player, idx) => (
+                        <span key={`${idx}-${player.email}`}>
                           {player.name} ({player.email}){" "}
                           {paidEmails && (
                             paidEmails.has(player.email.toLowerCase()) ? (
