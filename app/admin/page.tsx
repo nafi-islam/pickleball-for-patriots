@@ -1,6 +1,7 @@
 import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient";
 import { requireAdmin } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { fetchTicketPayments } from "@/lib/stripe";
 
 const MAX_TEAMS_PER_BRACKET = 32;
 
@@ -26,10 +27,12 @@ async function fetchBracketIds() {
 export default async function AdminPage() {
   await requireAdmin();
 
-  const [{ recreationalId, competitiveId }, tournament] = await Promise.all([
-    fetchBracketIds(),
-    fetchTournamentOverview(),
-  ]);
+  const [{ recreationalId, competitiveId }, tournament, ticketPayments] =
+    await Promise.all([
+      fetchBracketIds(),
+      fetchTournamentOverview(),
+      fetchTicketPayments(),
+    ]);
 
   const [
     totalTeams,
@@ -84,6 +87,7 @@ export default async function AdminPage() {
         maxTeams: MAX_TEAMS_PER_BRACKET,
       }}
       tournament={tournament}
+      ticketPayments={ticketPayments}
     />
   );
 }
