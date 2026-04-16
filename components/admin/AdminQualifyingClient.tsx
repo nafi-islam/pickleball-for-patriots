@@ -90,12 +90,13 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     Record<string, { scoreA: number | null; scoreB: number | null }>
   >({});
 
-  if (!data) {
-    return <Empty description="No bracket found yet." />;
-  }
+  const bracket = data?.bracket ?? null;
+  const courts = data?.courts ?? [];
+  const allTeams = data?.teams ?? [];
 
-  const { bracket, courts, assignments, matches, stats } = data;
-  const allTeams = data.teams ?? [];
+  const assignments = useMemo(() => data?.assignments ?? [], [data?.assignments]);
+  const matches = useMemo(() => data?.matches ?? [], [data?.matches]);
+  const stats = useMemo(() => data?.stats ?? [], [data?.stats]);
 
   const assignmentsByCourt = useMemo(() => {
     const map = new Map<string, Assignment[]>();
@@ -140,6 +141,10 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
     }
     return map;
   }, [stats]);
+
+  if (!data || !bracket) {
+    return <Empty description="No bracket found yet." />;
+  }
 
   const handleScoreSave = async (
     matchId: string,
