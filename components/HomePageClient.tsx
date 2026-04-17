@@ -7,6 +7,7 @@ import { Badge, Button, Card, Col, Row, Space, Tag, Typography } from "antd";
 import LandingHeader from "@/components/LandingHeader";
 import ImageCarousel from "@/components/ImageCarousel";
 import PurposeSection from "@/components/PurposeSection";
+import { EventDaySection } from "@/components/EventDaySection";
 import FAQSection from "@/components/FAQSection";
 import ContactSection from "@/components/ContactSection";
 
@@ -238,6 +239,7 @@ export function HomePageClient({ bracketAvailability }: Props) {
       </section>
 
       <div ref={nextSectionRef}>
+        <EventDaySection />
         <PurposeSection />
       </div>
 
