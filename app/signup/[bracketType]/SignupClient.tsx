@@ -80,9 +80,14 @@ function renderErrorMessage(message: string) {
 type Props = {
   bracketType: string;
   ticketUrl: string | null;
+  enforcePayment?: boolean;
 };
 
-export function SignupClient({ bracketType, ticketUrl }: Props) {
+export function SignupClient({
+  bracketType,
+  ticketUrl,
+  enforcePayment = true,
+}: Props) {
   const [form] = Form.useForm<SignupFormValues>();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -118,7 +123,9 @@ export function SignupClient({ bracketType, ticketUrl }: Props) {
     setError(null);
     setLoading(true);
     try {
-      const result = await registerTeam(bracketType as BracketType, values);
+      const result = await registerTeam(bracketType as BracketType, values, {
+        enforcePayment,
+      });
       if ("error" in result) {
         setError(result.error);
       } else {
@@ -184,26 +191,35 @@ export function SignupClient({ bracketType, ticketUrl }: Props) {
             first-come, first-serve.
           </Typography.Text>
 
-          <Alert
-            type="info"
-            showIcon
-            title="Ticket required"
-            description={
-              <>
-                Each player must{" "}
-                {ticketUrl ? (
-                  <a href={ticketUrl} target="_blank" rel="noreferrer">
-                    purchase a ticket
-                  </a>
-                ) : (
-                  "purchase a ticket"
-                )}{" "}
-                before registering. The email used at checkout must match the
-                player email below. One person may purchase tickets for both
-                players, in that case, use that email for both players.
-              </>
-            }
-          />
+          {enforcePayment ? (
+            <Alert
+              type="info"
+              showIcon
+              title="Ticket required"
+              description={
+                <>
+                  Each player must{" "}
+                  {ticketUrl ? (
+                    <a href={ticketUrl} target="_blank" rel="noreferrer">
+                      purchase a ticket
+                    </a>
+                  ) : (
+                    "purchase a ticket"
+                  )}{" "}
+                  before registering. The email used at checkout must match the
+                  player email below. One person may purchase tickets for both
+                  players, in that case, use that email for both players.
+                </>
+              }
+            />
+          ) : (
+            <Alert
+              type="warning"
+              showIcon
+              title="Admin override mode"
+              description="Payment enforcement is disabled for this registration. Use only for approved manual exceptions."
+            />
+          )}
         </Space>
 
         <Divider />

@@ -212,6 +212,12 @@ export function AdminDashboardClient({ stats, tournament, ticketPayments }: Prop
                 <Link href="/admin/overrides">
                   <Button>Admin Overrides</Button>
                 </Link>
+                <Link href="/signup/recreational?enforcePayment=false">
+                  <Button type="dashed">Force Register (Recreational)</Button>
+                </Link>
+                <Link href="/signup/competitive?enforcePayment=false">
+                  <Button type="dashed">Force Register (Competitive)</Button>
+                </Link>
               </Space>
             </Space>
           </Card>

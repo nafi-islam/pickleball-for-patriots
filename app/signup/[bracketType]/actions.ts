@@ -35,6 +35,7 @@ function normalizeInput(formData: RegisterTeamInput): RegisterTeamInput {
 export async function registerTeam(
   bracketType: BracketType,
   formData: RegisterTeamInput,
+  options?: { enforcePayment?: boolean },
 ): Promise<{ success: true; teamId: string } | { error: string }> {
   try {
   // Validate bracket type
@@ -66,57 +67,65 @@ export async function registerTeam(
     }
   }
 
-  // Ticket-balance check: for each email associated with this team, compute
-  // (tickets purchased) − (players already on active teams). The total
-  // available across all team emails must be >= 2. This prevents ticket
-  // "theft" while allowing one buyer to cover both players.
-  const tickets = await fetchTicketPayments();
-  const teamEmailList = [
-    normalized.player1Email,
-    normalized.player2Email,
-    normalized.contactEmail,
-  ];
-  const uniqueTeamEmails = [...new Set(teamEmailList)];
+  const enforcePayment = options?.enforcePayment ?? true;
 
-  // Count tickets purchased per email
-  const ticketsByEmail = new Map<string, number>();
-  for (const t of tickets) {
-    if (uniqueTeamEmails.includes(t.email)) {
-      ticketsByEmail.set(t.email, (ticketsByEmail.get(t.email) ?? 0) + 1);
+  if (!enforcePayment) {
+    // Only admins may bypass payment validation.
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
+  } else {
+    // Ticket-balance check: for each email associated with this team, compute
+    // (tickets purchased) − (players already on active teams). The total
+    // available across all team emails must be >= 2. This prevents ticket
+    // "theft" while allowing one buyer to cover both players.
+    const tickets = await fetchTicketPayments();
+    const teamEmailList = [
+      normalized.player1Email,
+      normalized.player2Email,
+      normalized.contactEmail,
+    ];
+    const uniqueTeamEmails = [...new Set(teamEmailList)];
+
+    // Count tickets purchased per email
+    const ticketsByEmail = new Map<string, number>();
+    for (const t of tickets) {
+      if (uniqueTeamEmails.includes(t.email)) {
+        ticketsByEmail.set(t.email, (ticketsByEmail.get(t.email) ?? 0) + 1);
+      }
     }
-  }
 
-  // Count players already registered on active teams per email
-  const { data: activePlayers, error: activePlayersError } = await supabase
-    .from("players")
-    .select("email, teams!inner(is_active)")
-    .in("email", uniqueTeamEmails)
-    .eq("teams.is_active", true);
+    // Count players already registered on active teams per email
+    const { data: activePlayers, error: activePlayersError } = await supabase
+      .from("players")
+      .select("email, teams!inner(is_active)")
+      .in("email", uniqueTeamEmails)
+      .eq("teams.is_active", true);
 
-  if (activePlayersError) {
-    throw new Error("Could not verify ticket eligibility.");
-  }
-
-  const usedByEmail = new Map<string, number>();
-  for (const p of activePlayers ?? []) {
-    const email = p.email?.trim().toLowerCase();
-    if (email) {
-      usedByEmail.set(email, (usedByEmail.get(email) ?? 0) + 1);
+    if (activePlayersError) {
+      throw new Error("Could not verify ticket eligibility.");
     }
-  }
 
-  let availableTickets = 0;
-  for (const email of uniqueTeamEmails) {
-    const purchased = ticketsByEmail.get(email) ?? 0;
-    const used = usedByEmail.get(email) ?? 0;
-    availableTickets += Math.max(0, purchased - used);
-  }
+    const usedByEmail = new Map<string, number>();
+    for (const p of activePlayers ?? []) {
+      const email = p.email?.trim().toLowerCase();
+      if (email) {
+        usedByEmail.set(email, (usedByEmail.get(email) ?? 0) + 1);
+      }
+    }
 
-  if (availableTickets < 2) {
-    const ticketUrl = process.env.PARTICIPANT_TICKET_URL ?? "";
-    throw new Error(
-      `Not enough available tickets for this team (${availableTickets} available, 2 required). Each ticket can only be used once. Buy tickets here: ${ticketUrl}`,
-    );
+    let availableTickets = 0;
+    for (const email of uniqueTeamEmails) {
+      const purchased = ticketsByEmail.get(email) ?? 0;
+      const used = usedByEmail.get(email) ?? 0;
+      availableTickets += Math.max(0, purchased - used);
+    }
+
+    if (availableTickets < 2) {
+      const ticketUrl = process.env.PARTICIPANT_TICKET_URL ?? "";
+      throw new Error(
+        `Not enough available tickets for this team (${availableTickets} available, 2 required). Each ticket can only be used once. Buy tickets here: ${ticketUrl}`,
+      );
+    }
   }
 
   // Fetch the bracket

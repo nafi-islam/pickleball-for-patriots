@@ -13,10 +13,14 @@ vi.mock("@/lib/stripe", async () => {
   const m = await import("@/__tests__/mocks/stripe");
   return { fetchTicketPayments: m.mockFetchTicketPayments };
 });
+vi.mock("@/lib/auth", () => ({
+  requireAdmin: vi.fn(async () => ({ id: "admin-user" })),
+}));
 
 // ── Imports ────────────────────────────────────────────────────────────────
 import { registerTeam } from "@/app/signup/[bracketType]/actions";
 import { setTicketCountsByEmail } from "@/__tests__/mocks/stripe";
+import { requireAdmin } from "@/lib/auth";
 import {
   seedBrackets,
   seedTeams,
@@ -40,6 +44,8 @@ beforeEach(async () => {
   await cleanupTestData();
   const seed = await seedBrackets();
   brackets = seed.brackets;
+  vi.mocked(requireAdmin).mockReset();
+  vi.mocked(requireAdmin).mockResolvedValue({ id: "admin-user" } as never);
 
   setTicketCountsByEmail({
     "player1@test.com": 1,
@@ -240,6 +246,283 @@ describe("registerTeam (integration)", () => {
         player2Email: "p3@test.com",
       });
       expect(second).toEqual({ success: true, teamId: expect.any(String) });
+    });
+
+    it("blocks same contact email in same bracket without override when tickets are sufficient", async () => {
+      setTicketCountsByEmail({
+        "contact@test.com": 4,
+      });
+
+      const first = await registerTeam("recreational", {
+        ...VALID_FORM,
+        contactEmail: "contact@test.com",
+        player1Email: "contact@test.com",
+        player2Email: "p2@test.com",
+      });
+      expect(first).toEqual({ success: true, teamId: expect.any(String) });
+
+      const second = await registerTeam("recreational", {
+        ...VALID_FORM,
+        teamName: "Second Team",
+        contactEmail: "contact@test.com",
+        player1Email: "contact@test.com",
+        player2Email: "p3@test.com",
+      });
+      expect(second).toEqual({
+        error: "This email has already registered a team for this bracket.",
+      });
+    });
+
+    it("allows same contact email in same bracket when previous team is inactive", async () => {
+      setTicketCountsByEmail({
+        "contact@test.com": 4,
+      });
+
+      const first = await registerTeam("recreational", {
+        ...VALID_FORM,
+        contactEmail: "contact@test.com",
+        player1Email: "contact@test.com",
+        player2Email: "p2@test.com",
+      });
+      expect(first).toEqual({ success: true, teamId: expect.any(String) });
+
+      if ("teamId" in first) {
+        await testDb.from("teams").update({ is_active: false }).eq("id", first.teamId);
+      }
+
+      const second = await registerTeam("recreational", {
+        ...VALID_FORM,
+        teamName: "Second Team After Withdrawal",
+        contactEmail: "contact@test.com",
+        player1Email: "contact@test.com",
+        player2Email: "p3@test.com",
+      });
+      expect(second).toEqual({ success: true, teamId: expect.any(String) });
+    });
+  });
+
+  // ── Admin payment-override mode ────────────────────────────────────────
+  describe("admin payment override", () => {
+    it("allows registration without purchased tickets when enforcePayment=false", async () => {
+      const result = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          contactEmail: "override@test.com",
+          player1Email: "override-p1@test.com",
+          player2Email: "override-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+
+      expect(result).toEqual({ success: true, teamId: expect.any(String) });
+      expect(requireAdmin).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies override when admin auth fails", async () => {
+      vi.mocked(requireAdmin).mockRejectedValueOnce(
+        new Error("Admin privileges required."),
+      );
+
+      const result = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          contactEmail: "blocked@test.com",
+          player1Email: "blocked-p1@test.com",
+          player2Email: "blocked-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+
+      expect(result).toEqual({ error: "Admin privileges required." });
+    });
+
+    it("fails override for non-admin users and does not change DB size", async () => {
+      vi.mocked(requireAdmin).mockRejectedValueOnce(
+        new Error("Not authorized as admin."),
+      );
+
+      const beforeTeams = await testDb
+        .from("teams")
+        .select("id", { count: "exact", head: true });
+      const beforePlayers = await testDb
+        .from("players")
+        .select("id", { count: "exact", head: true });
+
+      const result = await registerTeam(
+        "competitive",
+        {
+          ...VALID_FORM,
+          contactEmail: "unauthorized@test.com",
+          player1Email: "unauthorized-p1@test.com",
+          player2Email: "unauthorized-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+
+      expect(result).toEqual({ error: "Not authorized as admin." });
+
+      const afterTeams = await testDb
+        .from("teams")
+        .select("id", { count: "exact", head: true });
+      const afterPlayers = await testDb
+        .from("players")
+        .select("id", { count: "exact", head: true });
+
+      expect(afterTeams.count).toBe(beforeTeams.count);
+      expect(afterPlayers.count).toBe(beforePlayers.count);
+    });
+
+    it("still blocks same-bracket duplicate contact under admin override", async () => {
+      const first = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          contactEmail: "override-dup@test.com",
+          player1Email: "override-dup-p1@test.com",
+          player2Email: "override-dup-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+      expect(first).toEqual({ success: true, teamId: expect.any(String) });
+
+      const second = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          teamName: "Override Duplicate Team",
+          contactEmail: "override-dup@test.com",
+          player1Email: "override-dup-p3@test.com",
+          player2Email: "override-dup-p4@test.com",
+        },
+        { enforcePayment: false },
+      );
+      expect(second).toEqual({
+        error: "This email has already registered a team for this bracket.",
+      });
+    });
+
+    it("allows same contact email across different brackets under admin override", async () => {
+      const first = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          contactEmail: "override-cross@test.com",
+          player1Email: "override-cross-p1@test.com",
+          player2Email: "override-cross-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+      expect(first).toEqual({ success: true, teamId: expect.any(String) });
+
+      const second = await registerTeam(
+        "competitive",
+        {
+          ...VALID_FORM,
+          teamName: "Override Cross Bracket Team",
+          contactEmail: "override-cross@test.com",
+          player1Email: "override-cross-p3@test.com",
+          player2Email: "override-cross-p4@test.com",
+        },
+        { enforcePayment: false },
+      );
+      expect(second).toEqual({ success: true, teamId: expect.any(String) });
+    });
+
+    it("still enforces bracket capacity when payment checks are bypassed", async () => {
+      await seedTeams(brackets.recreational, 32);
+
+      const result = await registerTeam(
+        "recreational",
+        {
+          ...VALID_FORM,
+          contactEmail: "override-full@test.com",
+          player1Email: "override-full-p1@test.com",
+          player2Email: "override-full-p2@test.com",
+        },
+        { enforcePayment: false },
+      );
+
+      expect(result).toEqual({ error: "This bracket is full." });
+      expect(requireAdmin).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not call requireAdmin when enforcePayment remains true", async () => {
+      const result = await registerTeam("recreational", VALID_FORM, {
+        enforcePayment: true,
+      });
+
+      expect(result).toEqual({ success: true, teamId: expect.any(String) });
+      expect(requireAdmin).not.toHaveBeenCalled();
+    });
+
+    it("fails paid second bracket, then succeeds with admin override and updates DB counts", async () => {
+      setTicketCountsByEmail({
+        "player1@test.com": 1,
+        "player2@test.com": 1,
+      });
+
+      // First registration uses both purchased tickets.
+      const first = await registerTeam("recreational", VALID_FORM, {
+        enforcePayment: true,
+      });
+      expect(first).toEqual({ success: true, teamId: expect.any(String) });
+
+      const afterFirstTeams = await testDb
+        .from("teams")
+        .select("id", { count: "exact", head: true });
+      const afterFirstPlayers = await testDb
+        .from("players")
+        .select("id", { count: "exact", head: true });
+
+      expect(afterFirstTeams.count).toBe(1);
+      expect(afterFirstPlayers.count).toBe(2);
+
+      // Second registration with payment enforcement should fail due to exhausted tickets.
+      const secondPaid = await registerTeam("competitive", VALID_FORM, {
+        enforcePayment: true,
+      });
+      expect(secondPaid).toEqual({
+        error: expect.stringContaining("Not enough available tickets"),
+      });
+
+      const afterFailedPaidTeams = await testDb
+        .from("teams")
+        .select("id", { count: "exact", head: true });
+      const afterFailedPaidPlayers = await testDb
+        .from("players")
+        .select("id", { count: "exact", head: true });
+
+      // Failed attempt should not create rows.
+      expect(afterFailedPaidTeams.count).toBe(1);
+      expect(afterFailedPaidPlayers.count).toBe(2);
+
+      // Admin override should allow competitive registration despite ticket exhaustion.
+      const secondOverride = await registerTeam(
+        "competitive",
+        {
+          ...VALID_FORM,
+          teamName: "Competitive Override Team",
+          contactEmail: "contact-override@test.com",
+        },
+        { enforcePayment: false },
+      );
+      expect(secondOverride).toEqual({
+        success: true,
+        teamId: expect.any(String),
+      });
+      expect(requireAdmin).toHaveBeenCalledTimes(1);
+
+      const finalTeams = await testDb
+        .from("teams")
+        .select("id", { count: "exact", head: true });
+      const finalPlayers = await testDb
+        .from("players")
+        .select("id", { count: "exact", head: true });
+
+      expect(finalTeams.count).toBe(2);
+      expect(finalPlayers.count).toBe(4);
     });
   });
 
