@@ -97,6 +97,13 @@ npm run dev
 - App: http://localhost:3000
 - Supabase: http://127.0.0.1:54323
 
+### 6) Run Tests
+
+```bash
+npm run test:integration
+npm run test:unit
+```
+
 ## Environment Variables 📄
 
 Required:

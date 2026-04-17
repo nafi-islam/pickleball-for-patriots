@@ -4,15 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, Input, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { DollarOutlined } from "@ant-design/icons";
-
-type TicketPayment = {
-  email: string;
-  name: string | null;
-  amountPaid: number;
-  currency: string;
-  paidAt: number;
-  sessionId: string;
-};
+import type { TicketPayment } from "@/lib/stripe";
 
 const columns: ColumnsType<TicketPayment> = [
   {
