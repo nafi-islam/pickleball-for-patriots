@@ -5,6 +5,7 @@ import { Badge, Button, Card, Col, Row, Space, Tag, Typography } from "antd";
 import { DashboardOutlined } from "@ant-design/icons";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { PaidTicketsTable } from "@/components/admin/PaidTicketsTable";
+import type { TicketPayment } from "@/lib/stripe";
 
 type Stats = {
   totalTeams: number;
@@ -22,15 +23,6 @@ type TournamentOverview = {
   event_date?: string | null;
   status?: string | null;
   updated_at?: string | null;
-};
-
-type TicketPayment = {
-  email: string;
-  name: string | null;
-  amountPaid: number;
-  currency: string;
-  paidAt: number;
-  sessionId: string;
 };
 
 type Props = {
