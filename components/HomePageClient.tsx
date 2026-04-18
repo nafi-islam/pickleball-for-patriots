@@ -119,6 +119,23 @@ function BracketCard({
             Full
           </Button>
         )}
+
+        <Row gutter={[8, 8]} className="w-full">
+          <Col span={12}>
+            <Link href={`/qualifying/${type}`} className="block w-full">
+              <Button size="large" block>
+                Qualifying
+              </Button>
+            </Link>
+          </Col>
+          <Col span={12}>
+            <Link href={`/bracket/${type}`} className="block w-full">
+              <Button size="large" block>
+                Bracket
+              </Button>
+            </Link>
+          </Col>
+        </Row>
       </Space>
     </Card>
   );
