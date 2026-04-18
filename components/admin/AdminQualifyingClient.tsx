@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
-  Col,
   Collapse,
   Drawer,
   Empty,
   InputNumber,
   Modal,
-  Row,
   Select,
   Space,
   Tabs,
@@ -75,6 +73,29 @@ type BracketData = {
   teams: Array<{ id: string; name: string }>;
 };
 
+/** Draft field: undefined = inherit server; null = user cleared the input (must not fall back via ??). */
+type ScoreDraft = Partial<{ scoreA: number | null; scoreB: number | null }>;
+
+function scoreInputValue(
+  draft: ScoreDraft | undefined,
+  field: "scoreA" | "scoreB",
+  server: number | null,
+): number | null {
+  if (!draft || !Object.prototype.hasOwnProperty.call(draft, field)) {
+    return server ?? null;
+  }
+  const v = draft[field];
+  return v === undefined ? server ?? null : v;
+}
+
+function resolvedScoreForSave(
+  draft: ScoreDraft | undefined,
+  field: "scoreA" | "scoreB",
+  server: number | null,
+): number {
+  return scoreInputValue(draft, field, server) ?? 0;
+}
+
 function QualifyingSection({ data }: { data: BracketData | null }) {
   const [toast, contextHolder] = message.useMessage();
   const router = useRouter();
@@ -86,9 +107,7 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
   const [seedSelections, setSeedSelections] = useState<
     Record<string, Array<string | null>>
   >({});
-  const [scoreInputs, setScoreInputs] = useState<
-    Record<string, { scoreA: number | null; scoreB: number | null }>
-  >({});
+  const [scoreInputs, setScoreInputs] = useState<Record<string, ScoreDraft>>({});
 
   const bracket = data?.bracket ?? null;
   const courts = data?.courts ?? [];
@@ -162,7 +181,15 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
         toast.error(result.error);
       } else {
         toast.success("Qualifying score saved.");
-        router.refresh();
+        // Clear draft state so inputs show fresh server values after refresh.
+        // Otherwise `scoreInputs` keeps overriding `match.score_*` and can look
+        // empty or stale if the user edits again before / during refresh.
+        await router.refresh();
+        setScoreInputs((prev) => {
+          const next = { ...prev };
+          delete next[matchId];
+          return next;
+        });
       }
     } finally {
       setSavingMatchId(null);
@@ -460,20 +487,20 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                                   <InputNumber
                                     min={0}
                                     placeholder="Score A"
-                                    value={
-                                      scoreInputs[match.id]?.scoreA ??
-                                      match.score_a ??
-                                      null
-                                    }
+                                    value={scoreInputValue(
+                                      scoreInputs[match.id],
+                                      "scoreA",
+                                      match.score_a,
+                                    )}
                                     onChange={(value) =>
                                       setScoreInputs((prev) => ({
                                         ...prev,
                                         [match.id]: {
-                                          scoreA: value ?? null,
-                                          scoreB:
-                                            prev[match.id]?.scoreB ??
-                                            match.score_b ??
-                                            null,
+                                          ...prev[match.id],
+                                          scoreA:
+                                            value === null || value === undefined
+                                              ? null
+                                              : value,
                                         },
                                       }))
                                     }
@@ -481,20 +508,20 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                                   <InputNumber
                                     min={0}
                                     placeholder="Score B"
-                                    value={
-                                      scoreInputs[match.id]?.scoreB ??
-                                      match.score_b ??
-                                      null
-                                    }
+                                    value={scoreInputValue(
+                                      scoreInputs[match.id],
+                                      "scoreB",
+                                      match.score_b,
+                                    )}
                                     onChange={(value) =>
                                       setScoreInputs((prev) => ({
                                         ...prev,
                                         [match.id]: {
-                                          scoreA:
-                                            prev[match.id]?.scoreA ??
-                                            match.score_a ??
-                                            null,
-                                          scoreB: value ?? null,
+                                          ...prev[match.id],
+                                          scoreB:
+                                            value === null || value === undefined
+                                              ? null
+                                              : value,
                                         },
                                       }))
                                     }
@@ -503,14 +530,17 @@ function QualifyingSection({ data }: { data: BracketData | null }) {
                                     type="primary"
                                     loading={savingMatchId === match.id}
                                     onClick={() => {
-                                      const scoreA =
-                                        scoreInputs[match.id]?.scoreA ??
-                                        match.score_a ??
-                                        0;
-                                      const scoreB =
-                                        scoreInputs[match.id]?.scoreB ??
-                                        match.score_b ??
-                                        0;
+                                      const draft = scoreInputs[match.id];
+                                      const scoreA = resolvedScoreForSave(
+                                        draft,
+                                        "scoreA",
+                                        match.score_a,
+                                      );
+                                      const scoreB = resolvedScoreForSave(
+                                        draft,
+                                        "scoreB",
+                                        match.score_b,
+                                      );
                                       handleScoreSave(match.id, scoreA, scoreB);
                                     }}
                                   >
